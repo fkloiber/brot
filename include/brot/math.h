@@ -7,11 +7,11 @@
 extern "C"{
 #endif
 
-__m265  mm265_log_ps(__m265  x);
-__m265d mm265_log_pd(__m265d x);
+__m256  mm256_log_ps(__m256  x);
+__m256d mm256_log_pd(__m256d x);
 
-__m265  mm265_log2_ps(__m265  x);
-__m265d mm265_log2_pd(__m265d x);
+__m256  mm256_log2_ps(__m256  x);
+__m256d mm256_log2_pd(__m256d x);
 
 #ifdef __cplusplus
 }
