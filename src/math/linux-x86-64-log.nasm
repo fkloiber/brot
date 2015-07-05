@@ -8,8 +8,7 @@
 
 
     global mm256_log_pd
-
-
+    global mm256_log_ps
 
     section .text
 
@@ -35,7 +34,7 @@ mm256_log_pd:
     vandnpd ymm1,  ymm15, ymm0    ; not(+inf) is just the right mask to extract the (signed) mantissa
     vorpd   ymm2,  ymm1, [hlf_pd] ; mantissa / 2
     vorpd   ymm1,  ymm14          ; normalize mantissa
-    vcmppd  ymm10, ymm1, [sqrt2_pd], _CMP_LT_OQ ; mask x<sqrt(2)
+    vcmppd  ymm10, ymm1, [sqrt_pd], _CMP_LT_OQ ; mask x<sqrt(2)
 
     ; extract exponent
     vmovapd ymm3, [idx_si]
@@ -83,6 +82,66 @@ mm256_log_pd:
 
     ret
 
+
+
+mm256_log_ps:
+    vmovaps ymm15, [inf_ps] ; ymm15 := Inf
+    vmovaps ymm14, [one_ps] ; ymm14 := 1.0
+
+    ; special return values masks
+    vxorps ymm1, ymm1                        ; ymm1 := 0
+    vcmpps ymm13, ymm0, [min_ps], _CMP_LT_OQ ; mask denormals and lower to return -inf
+    vcmpps ymm12, ymm0, ymm1,     _CMP_LT_OQ ; mask x<0 to return NaN
+    vcmpps ymm11, ymm0, ymm15,    _CMP_EQ_OQ ; mask x=+inf to return +inf
+
+    ; extract mantissa
+    vandnps ymm1,  ymm15, ymm0    ; not(+inf) is just the right mask to extract the (signed) mantissa
+    vorps   ymm2,  ymm1, [hlf_ps] ; mantissa / 2
+    vorps   ymm1,  ymm14          ; normalize mantissa
+    vcmpps  ymm10, ymm1, [sqrt_ps], _CMP_LT_OQ ; mask x<sqrt(2)
+
+    ; extract exponent
+    vpsrld  ymm0, 23
+    vpsubd  ymm0, [bias_ps]
+    vcvtdq2ps ymm0, ymm0
+    vaddps  ymm3, ymm0, ymm14
+
+    ; restric mantissa to [1/sqrt(2), sqrt(2)) and adjust exponent
+    vblendvps ymm3, ymm0, ymm10
+    vblendvps ymm2, ymm1, ymm10
+
+    vmulps ymm3, [log2_ps] ; log(2^e) = e*log(2)
+
+    ; r = (m-1)/(m+1)
+    vsubps ymm1, ymm2, ymm14
+    vaddps ymm2, ymm14
+    vdivps ymm1, ymm2
+    vmovaps ymm0, ymm1 ; ymm0 := r
+    vmulps ymm1, ymm1  ; ymm1 := r^2
+
+    ;
+    vxorps ymm4, ymm4
+    vmovaps ymm2, [e4_ps]
+
+    vfmadd213ps ymm2, ymm1, [e3_ps]
+    vfmadd213ps ymm2, ymm1, [e2_ps]
+    vfmadd213ps ymm2, ymm1, [e1_ps]
+    vfmadd213ps ymm2, ymm1, [e0_ps]
+
+    vfmadd213ps ymm0, ymm2, ymm3
+
+    ; Blend special return values into result
+    vxorps ymm2, ymm2
+    vsubps ymm2, ymm15
+    vblendvps ymm0, ymm15, ymm11
+    vblendvps ymm0, ymm2, ymm13
+    vorps ymm0, ymm12
+
+    ret
+
+
+
+
     section .data
     align 32
 inf_pd:  times 4 dq __Infinity__
@@ -105,3 +164,16 @@ e2_pd:   times 4 dq 0.40000000000000000 ; 2/5
 e1_pd:   times 4 dq 0.66666666666666666 ; 2/3
 e0_pd:   times 4 dq 2.00000000000000000 ; 2
 
+inf_ps:  times 8 dd __Infinity__
+one_ps:  times 8 dd 1.0
+hlf_ps:  times 8 dd 0.5
+min_ps:  times 8 dd 0x10000000
+sqrt_ps: times 8 dd 1.4142135623730950
+bias_ps: times 8 dd 127
+log2_ps: times 8 dd 0.69314718055994530
+
+e4_ps:   times 8 dd 0.22222222222222222
+e3_ps:   times 8 dd 0.28571428571428571
+e2_ps:   times 8 dd 0.40000000000000000
+e1_ps:   times 8 dd 0.66666666666666666
+e0_ps:   times 8 dd 2.00000000000000000
