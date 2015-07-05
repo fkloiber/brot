@@ -60,20 +60,21 @@ mm256_log_pd:
 
     ;
     vxorpd ymm4, ymm4
-    vmovapd ymm2, [c9_pd]
+    vmovapd ymm2, [e9_pd]
 
-    vfmadd213pd ymm2, ymm1, [c8_pd]
-    vfmadd213pd ymm2, ymm1, [c7_pd]
-    vfmadd213pd ymm2, ymm1, [c6_pd]
-    vfmadd213pd ymm2, ymm1, [c5_pd]
-    vfmadd213pd ymm2, ymm1, [c4_pd]
-    vfmadd213pd ymm2, ymm1, [c3_pd]
-    vfmadd213pd ymm2, ymm1, [c2_pd]
-    vfmadd213pd ymm2, ymm1, [c1_pd]
-    vfmadd213pd ymm2, ymm1, [c0_pd]
+    vfmadd213pd ymm2, ymm1, [e8_pd]
+    vfmadd213pd ymm2, ymm1, [e7_pd]
+    vfmadd213pd ymm2, ymm1, [e6_pd]
+    vfmadd213pd ymm2, ymm1, [e5_pd]
+    vfmadd213pd ymm2, ymm1, [e4_pd]
+    vfmadd213pd ymm2, ymm1, [e3_pd]
+    vfmadd213pd ymm2, ymm1, [e2_pd]
+    vfmadd213pd ymm2, ymm1, [e1_pd]
+    vfmadd213pd ymm2, ymm1, [e0_pd]
 
     vfmadd213pd ymm0, ymm2, ymm3
 
+    ; Blend special return values into result
     vxorpd ymm2, ymm2
     vsubpd ymm2, ymm15
     vblendvpd ymm0, ymm15, ymm11
@@ -84,44 +85,23 @@ mm256_log_pd:
 
     section .data
     align 32
-inf_pd:
-    times 4 dq __Infinity__
-one_pd:
-    times 4 dq 1.0
-hlf_pd:
-    times 4 dq 0.5
-min_pd:
-    times 4 dq 0x10000000000000   ; smallest positive normalized double
-sqrt2_pd:
-    times 4 dq 1.4142135623730950 ; sqrt(2)
-bias_pd:
-    times 8 dd 1023
-idx_si:
-    dd 1, 3, 5, 7, 0, 2, 4, 6
-log2_pd:
-    times 4 dq 0.69314718055994530 ; log(2)
+inf_pd:  times 4 dq __Infinity__
+one_pd:  times 4 dq 1.0
+hlf_pd:  times 4 dq 0.5
+min_pd:  times 4 dq 0x10000000000000    ; smallest positive normalized double
+sqrt_pd: times 4 dq 1.4142135623730950  ; sqrt(2)
+bias_pd: times 8 dd 1023
+idx_si:  dd 1, 3, 5, 7, 0, 2, 4, 6
+log2_pd: times 4 dq 0.69314718055994530 ; log(2)
 
-c9_pd:
-    times 4 dq 0.10526315789473684 ; 2/19
-c8_pd:
-    times 4 dq 0.11764705882352941 ; 2/17
-c7_pd:
-    times 4 dq 0.13333333333333333 ; 2/15
-c6_pd:
-    times 4 dq 0.15384615384615385 ; 2/13
-c5_pd:
-    times 4 dq 0.18181818181818182 ; 2/11
-c4_pd:
-    times 4 dq 0.22222222222222222 ; 2/9
-c3_pd:
-    times 4 dq 0.28571428571428571 ; 2/7
-c2_pd:
-    times 4 dq 0.40000000000000000 ; 2/5
-c1_pd:
-    times 4 dq 0.66666666666666666 ; 2/3
-c0_pd:
-    times 4 dq 2.00000000000000000 ; 2
+e9_pd:   times 4 dq 0.10526315789473684 ; 2/19
+e8_pd:   times 4 dq 0.11764705882352941 ; 2/17
+e7_pd:   times 4 dq 0.13333333333333333 ; 2/15
+e6_pd:   times 4 dq 0.15384615384615385 ; 2/13
+e5_pd:   times 4 dq 0.18181818181818182 ; 2/11
+e4_pd:   times 4 dq 0.22222222222222222 ; 2/9
+e3_pd:   times 4 dq 0.28571428571428571 ; 2/7
+e2_pd:   times 4 dq 0.40000000000000000 ; 2/5
+e1_pd:   times 4 dq 0.66666666666666666 ; 2/3
+e0_pd:   times 4 dq 2.00000000000000000 ; 2
 
-    section .bss
-    alignb 16
-infmask_pd:
