@@ -9,6 +9,8 @@
 
     global mm256_log_pd
     global mm256_log_ps
+    global mm256_log2_pd
+    global mm256_log2_ps
 
     section .text
 
@@ -148,7 +150,7 @@ mm256_log_ps:
 ; returns -inf for 0 and denormals
 ; returns +inf for +inf
 
-; log2(x) = log2(m*2^e) = log2(m) + e with m \in [1/sqrt(2), sqrt(2))
+; log2(x) = log2(m*2^e) = log(m)/log(2) + e with m \in [1/sqrt(2), sqrt(2))
 ; log2(m) = 2/log2(e)*artanh((m-1)/(m+1)) = 2/log2(e)*(r + r^3/3 + r^5/5 + ...) with r := (m-1)/(m+1)
 
 mm256_log2_pd:
@@ -189,6 +191,7 @@ mm256_log2_pd:
     ;
     vmovapd ymm2, [d9_pd]
 
+    ;vfmadd213pd ymm2, ymm1, [d9_pd]
     vfmadd213pd ymm2, ymm1, [d8_pd]
     vfmadd213pd ymm2, ymm1, [d7_pd]
     vfmadd213pd ymm2, ymm1, [d6_pd]
@@ -294,16 +297,16 @@ e2_pd:   times 4 dq 0.40000000000000000 ; 2/5
 e1_pd:   times 4 dq 0.66666666666666666 ; 2/3
 e0_pd:   times 4 dq 2.00000000000000000 ; 2
 
-d9_pd:  times 4 dq 0.072962861111573185 ; 2/19/log2(e)
-d8_pd:  times 4 dq 0.081546727124699444 ; 2/17/log2(e)
-d7_pd:  times 4 dq 0.092419624074659367 ; 2/15/log2(e)
-d6_pd:  times 4 dq 0.106638027778453131 ; 2/13/log2(e)
-d5_pd:  times 4 dq 0.126026760101808243 ; 2/11/log2(e)
-d4_pd:  times 4 dq 0.154032706791098955 ; 2/9/log2(e)
-d3_pd:  times 4 dq 0.198042051588555784 ; 2/7/log2(e)
-d2_pd:  times 4 dq 0.277258872223978158 ; 2/5/log2(e)
-d1_pd:  times 4 dq 0.462098120373296838 ; 2/3/log2(e)
-d0_pd:  times 4 dq 1.386294361119890572 ; 2/log2(e)
+d9_pd: times 4 dq 0.15186263588304876881 ; 2/19/log(2)
+d8_pd: times 4 dq 0.16972882833987804063 ; 2/17/log(2)
+d7_pd: times 4 dq 0.19235933878519512197 ; 2/15/log(2)
+d6_pd: times 4 dq 0.22195308321368667492 ; 2/13/log(2)
+d5_pd: times 4 dq 0.26230818925253879259 ; 2/11/log(2)
+d4_pd: times 4 dq 0.32059889797532520328 ; 2/9/log(2)
+d3_pd: times 4 dq 0.41219858311113238836 ; 2/7/log(2)
+d2_pd: times 4 dq 0.57707801635558531039 ; 2/5/log(2)
+d1_pd: times 4 dq 0.96179669392597555433 ; 2/3/log(2)
+d0_pd: times 4 dq 2.88539008177792677401 ; 2/log(2)
 
 
 inf_ps:  times 8 dd __Infinity__
