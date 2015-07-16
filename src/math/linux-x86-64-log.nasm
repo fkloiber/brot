@@ -167,7 +167,7 @@ e0_pd:   times 4 dq 2.00000000000000000 ; 2
 inf_ps:  times 8 dd __Infinity__
 one_ps:  times 8 dd 1.0
 hlf_ps:  times 8 dd 0.5
-min_ps:  times 8 dd 0x10000000
+min_ps:  times 8 dd 0x800000
 sqrt_ps: times 8 dd 1.4142135623730950
 bias_ps: times 8 dd 127
 log2_ps: times 8 dd 0.69314718055994530
