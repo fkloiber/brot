@@ -60,10 +60,8 @@ mm256_log_pd:
     vmulpd ymm1, ymm1  ; ymm1 := r^2
 
     ;
-    vmovapd ymm2, [e9_pd]
+    vmovapd ymm2, [e7_pd]
 
-    vfmadd213pd ymm2, ymm1, [e8_pd]
-    vfmadd213pd ymm2, ymm1, [e7_pd]
     vfmadd213pd ymm2, ymm1, [e6_pd]
     vfmadd213pd ymm2, ymm1, [e5_pd]
     vfmadd213pd ymm2, ymm1, [e4_pd]
@@ -125,9 +123,8 @@ mm256_log_ps:
     vmulps ymm1, ymm1  ; ymm1 := r^2
 
     ;
-    vmovaps ymm2, [e4_ps]
+    vmovaps ymm2, [e3_ps]
 
-    vfmadd213ps ymm2, ymm1, [e3_ps]
     vfmadd213ps ymm2, ymm1, [e2_ps]
     vfmadd213ps ymm2, ymm1, [e1_ps]
     vfmadd213ps ymm2, ymm1, [e0_ps]
@@ -189,11 +186,8 @@ mm256_log2_pd:
     vmulpd ymm1, ymm1  ; ymm1 := r^2
 
     ;
-    vmovapd ymm2, [d9_pd]
+    vmovapd ymm2, [d7_pd]
 
-    ;vfmadd213pd ymm2, ymm1, [d9_pd]
-    vfmadd213pd ymm2, ymm1, [d8_pd]
-    vfmadd213pd ymm2, ymm1, [d7_pd]
     vfmadd213pd ymm2, ymm1, [d6_pd]
     vfmadd213pd ymm2, ymm1, [d5_pd]
     vfmadd213pd ymm2, ymm1, [d4_pd]
@@ -254,9 +248,8 @@ mm256_log2_ps:
 
     ;
     vxorps ymm4, ymm4
-    vmovaps ymm2, [d4_ps]
+    vmovaps ymm2, [d3_ps]
 
-    vfmadd213ps ymm2, ymm1, [d3_ps]
     vfmadd213ps ymm2, ymm1, [d2_ps]
     vfmadd213ps ymm2, ymm1, [d1_ps]
     vfmadd213ps ymm2, ymm1, [d0_ps]
@@ -286,27 +279,23 @@ bias_pd: times 8 dd 1023
 idx_si:  dd 1, 3, 5, 7, 0, 2, 4, 6
 log2_pd: times 4 dq 0.69314718055994530 ; log(2)
 
-e9_pd:   times 4 dq 0.10526315789473684 ; 2/19
-e8_pd:   times 4 dq 0.11764705882352941 ; 2/17
-e7_pd:   times 4 dq 0.13333333333333333 ; 2/15
-e6_pd:   times 4 dq 0.15384615384615385 ; 2/13
-e5_pd:   times 4 dq 0.18181818181818182 ; 2/11
-e4_pd:   times 4 dq 0.22222222222222222 ; 2/9
-e3_pd:   times 4 dq 0.28571428571428571 ; 2/7
-e2_pd:   times 4 dq 0.40000000000000000 ; 2/5
-e1_pd:   times 4 dq 0.66666666666666666 ; 2/3
-e0_pd:   times 4 dq 2.00000000000000000 ; 2
+e7_pd: times 4 dq 0.147974090064523833287779552847496233880519866943359375
+e6_pd: times 4 dq 0.15313891351138753105232126472401432693004608154296875
+e5_pd: times 4 dq 0.18183571218449789963500506928539834916591644287109375
+e4_pd: times 4 dq 0.2222219842335171058333997962108696810901165008544921875
+e3_pd: times 4 dq 0.285714287440845426946367524578818120062351226806640625
+e2_pd: times 4 dq 0.399999999994054167284929235393065027892589569091796875
+e1_pd: times 4 dq 0.666666666666673624064287650980986654758453369140625
+e0_pd: times 4 dq 2.0
 
-d9_pd:   times 4 dq 0.15186263588304876881 ; 2/19/log(2)
-d8_pd:   times 4 dq 0.16972882833987804063 ; 2/17/log(2)
-d7_pd:   times 4 dq 0.19235933878519512197 ; 2/15/log(2)
-d6_pd:   times 4 dq 0.22195308321368667492 ; 2/13/log(2)
-d5_pd:   times 4 dq 0.26230818925253879259 ; 2/11/log(2)
-d4_pd:   times 4 dq 0.32059889797532520328 ; 2/9/log(2)
-d3_pd:   times 4 dq 0.41219858311113238836 ; 2/7/log(2)
-d2_pd:   times 4 dq 0.57707801635558531039 ; 2/5/log(2)
-d1_pd:   times 4 dq 0.96179669392597555433 ; 2/3/log(2)
-d0_pd:   times 4 dq 2.88539008177792677401 ; 2/log(2)
+d7_pd:   times 4 dq 0.215818533664292655505079210342955775558948516845703125
+d6_pd:   times 4 dq 0.220674863164010803817660644199349917471408843994140625
+d5_pd:   times 4 dq 0.2623448623151276581921820252318866550922393798828125
+d4_pd:   times 4 dq 0.320598298825929883815177845463040284812450408935546875
+d3_pd:   times 4 dq 0.412198588680393662730949699835036881268024444580078125
+d2_pd:   times 4 dq 0.57707801632799515800797962583601474761962890625
+d1_pd:   times 4 dq 0.9617966939260373937514714270946569740772247314453125
+d0_pd:   times 4 dq 2.88539008177792677400930188014172017574310302734375
 
 
 inf_ps:  times 8 dd __Infinity__
@@ -317,14 +306,12 @@ sqrt_ps: times 8 dd 1.4142135623730950  ; sqrt(2)
 bias_ps: times 8 dd 127
 log2_ps: times 8 dd 0.69314718055994530 ; log(2)
 
-e4_ps:   times 8 dd 0.22222222222222222 ; 2/9
-e3_ps:   times 8 dd 0.28571428571428571 ; 2/7
-e2_ps:   times 8 dd 0.40000000000000000 ; 2/5
-e1_ps:   times 8 dd 0.66666666666666666 ; 2/3
-e0_ps:   times 8 dd 2.00000000000000000 ; 2
+e3_ps:   times 8 dd 0.2987057268619537353515625
+e2_ps:   times 8 dd 0.3997758924961090087890625
+e1_ps:   times 8 dd 0.666667759418487548828125
+e0_ps:   times 8 dd 2.0
 
-d4_ps:   times 8 dd 0.32059889797532520328 ; 2/9/log(2)
-d3_ps:   times 8 dd 0.41219858311113238836 ; 2/7/log(2)
-d2_ps:   times 8 dd 0.57707801635558531039 ; 2/5/log(2)
-d1_ps:   times 8 dd 0.96179669392597555433 ; 2/3/log(2)
-d0_ps:   times 8 dd 2.88539008177792677401 ; 2/log(2)
+d3_ps:   times 8 dd 0.4448921680450439453125
+d2_ps:   times 8 dd 0.576037228107452392578125
+d1_ps:   times 8 dd 0.96180880069732666015625
+d0_ps:   times 8 dd 2.8853900432586669921875
