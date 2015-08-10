@@ -2,9 +2,14 @@ cmake_minimum_required(VERSION 2.6)
 project(Brot)
 enable_language(ASM_NASM)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -Wall -Wextra -std=gnu++0x -march=native")
-#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas -Wall -Wextra -std=gnu++0x -march=native")
-#SET(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NSAM_FLAGS} -f elf64 -g -F dwarf")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -Wno-unknown-pragmas -Wall -Wextra -std=gnu++0x -march=native")
+set(CMAKE_ASM_NASM_FLAGS_DEBUG "${CMAKE_ASM_NSAM_FLAGS_DEBUG} -felf64 -g -F dwarf -O0")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -fopenmp -Wall -Wextra -std=gnu++0x -march=native")
+set(CMAKE_ASM_NASM_FLAGS_RELEASE "${CMAKE_ASM_NSAM_FLAGS_RELEASE} -felf64")
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
 
 include_directories(include)
 
