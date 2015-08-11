@@ -36,6 +36,16 @@ int seed_xorshift128(xorshift128_t* r, uint64_t s) {
         s ^= s >> 27;
         r->s[i] = s * 2685821657736338717ull;
     }
+    return 0;
+}
+
+int seed_xorshift128_urandom(xorshift128_t* r) {
+    FILE* f = fopen("/dev/urandom", "rb");
+    if(!f)
+        return -1;
+    fread(r->s, sizeof(uint64_t), 2*4, f);
+    fclose(f);
+    return 0;
 }
 
 int seed_xorshift1024(xorshift1024_t* r, uint64_t s) {
@@ -47,6 +57,17 @@ int seed_xorshift1024(xorshift1024_t* r, uint64_t s) {
         r->s[i] = s * 2685821657736338717ull;
     }
     r->p = 0;
+    return 0;
+}
+
+int seed_xorshift1024_urandom(xorshift1024_t* r) {
+    FILE* f = fopen("/dev/urandom", "rb");
+    if(!f)
+        return -1;
+    fread(r->s, sizeof(uint64_t), 16*4, f);
+    fclose(f);
+    r->p = 0;
+    return 0;
 }
 
 #ifdef __cplusplus

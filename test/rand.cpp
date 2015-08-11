@@ -108,9 +108,7 @@ TEST(fill_canonical128_ps, BufferSizeControl) {
 TEST(fill_canonical128_ps, Distribution) {
     constexpr size_t N = 1ull<<22;
     xorshift128_t state;
-    FILE *f = fopen("/dev/urandom", "rb");
-    fread(state.s, sizeof(uint64_t), 2*4, f);
-    fclose(f);
+    seed_xorshift128_urandom(&state);
 
     std::vector<float> buffer(N);
 
@@ -131,9 +129,7 @@ TEST(fill_canonical128_ps, Distribution) {
 
 TEST(fill_canonical128_ps, Repeatable) {
     xorshift128_t state1;
-    FILE *f = fopen("/dev/urandom", "rb");
-    fread(state1.s, sizeof(uint64_t), 2*4, f);
-    fclose(f);
+    seed_xorshift128_urandom(&state1);
 
     xorshift128_t state2 = state1;
 
@@ -152,9 +148,7 @@ TEST(fill_canonical128_ps, Repeatable) {
 
 TEST(fill_canonical128_ps, Reentrant) {
     xorshift128_t state1;
-    FILE *f = fopen("/dev/urandom", "rb");
-    fread(state1.s, sizeof(uint64_t), 2*4, f);
-    fclose(f);
+    seed_xorshift128_urandom(&state1);
 
     xorshift128_t state2 = state1;
 
@@ -196,9 +190,7 @@ TEST(fill_canonical128_pd, BufferSizeControl) {
 TEST(fill_canonical128_pd, Distribution) {
     constexpr size_t N = 1ull<<21;
     xorshift128_t state;
-    FILE *f = fopen("/dev/urandom", "rb");
-    fread(state.s, sizeof(uint64_t), 2*4, f);
-    fclose(f);
+    seed_xorshift128_urandom(&state);
 
     std::vector<double> buffer(N);
 
@@ -219,9 +211,7 @@ TEST(fill_canonical128_pd, Distribution) {
 
 TEST(fill_canonical128_pd, Repeatable) {
     xorshift128_t state1;
-    FILE *f = fopen("/dev/urandom", "rb");
-    fread(state1.s, sizeof(uint64_t), 2*4, f);
-    fclose(f);
+    seed_xorshift128_urandom(&state1);
 
     xorshift128_t state2 = state1;
 
@@ -240,9 +230,7 @@ TEST(fill_canonical128_pd, Repeatable) {
 
 TEST(fill_canonical128_pd, Reentrant) {
     xorshift128_t state1;
-    FILE *f = fopen("/dev/urandom", "rb");
-    fread(state1.s, sizeof(uint64_t), 2*4, f);
-    fclose(f);
+    seed_xorshift128_urandom(&state1);
 
     xorshift128_t state2 = state1;
 
@@ -266,10 +254,7 @@ TEST(fill_canonical128_pd, Reentrant) {
 TEST(fill_canonical1024_ps, Distribution) {
     constexpr size_t N = 1ull<<22;
     xorshift1024_t state;
-    FILE *f = fopen("/dev/urandom", "rb");
-    fread(state.s, sizeof(uint64_t), 16*4, f);
-    fclose(f);
-    state.p = 0;
+    seed_xorshift1024_urandom(&state);
 
     std::vector<float> buffer(N);
 
@@ -290,10 +275,7 @@ TEST(fill_canonical1024_ps, Distribution) {
 
 TEST(fill_canonical1024_ps, Repeatable) {
     xorshift1024_t state1;
-    FILE *f = fopen("/dev/urandom", "rb");
-    fread(state1.s, sizeof(uint64_t), 16*4, f);
-    fclose(f);
-    state1.p = 0;
+    seed_xorshift1024_urandom(&state1);
 
     xorshift1024_t state2 = state1;
 
@@ -314,10 +296,7 @@ TEST(fill_canonical1024_ps, Repeatable) {
 
 TEST(fill_canonical1024_ps, Reentrant) {
     xorshift1024_t state1;
-    FILE *f = fopen("/dev/urandom", "rb");
-    fread(state1.s, sizeof(uint64_t), 16*4, f);
-    fclose(f);
-    state1.p = 0;
+    seed_xorshift1024_urandom(&state1);
 
     xorshift1024_t state2 = state1;
 
@@ -339,10 +318,7 @@ TEST(fill_canonical1024_ps, Reentrant) {
 TEST(fill_canonical1024_pd, Distribution) {
     constexpr size_t N = 1ull<<21;
     xorshift1024_t state;
-    FILE *f = fopen("/dev/urandom", "rb");
-    fread(state.s, sizeof(uint64_t), 16*4, f);
-    fclose(f);
-    state.p = 0;
+    seed_xorshift1024_urandom(&state);
 
     std::vector<double> buffer(N);
 
@@ -363,10 +339,7 @@ TEST(fill_canonical1024_pd, Distribution) {
 
 TEST(fill_canonical1024_pd, Repeatable) {
     xorshift1024_t state1;
-    FILE *f = fopen("/dev/urandom", "rb");
-    fread(state1.s, sizeof(uint64_t), 16*4, f);
-    fclose(f);
-    state1.p = 0;
+    seed_xorshift1024_urandom(&state1);
 
     xorshift1024_t state2 = state1;
 
@@ -391,10 +364,7 @@ TEST(fill_canonical1024_pd, Repeatable) {
 
 TEST(fill_canonical1024_pd, Reentrant) {
     xorshift1024_t state1;
-    FILE *f = fopen("/dev/urandom", "rb");
-    fread(state1.s, sizeof(uint64_t), 16*4, f);
-    fclose(f);
-    state1.p = 0;
+    seed_xorshift1024_urandom(&state1);
 
     xorshift1024_t state2 = state1;
 
