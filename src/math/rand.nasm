@@ -2,6 +2,8 @@
     global xorshift1024_next
     global fill_canonical128_ps
     global fill_canonical128_pd
+    global fill_canonical1024_ps
+    global fill_canonical1024_pd
 
     section .text
 
@@ -76,10 +78,10 @@ fill_canonical128_ps:
 
     ; less than 8 remaining?
     cmp rsi, 8
-    jl .Lfc128pslast
+    jl .last
 
     ; 8 loop
-.Lfc128loop8:
+.loop8:
     call fill_canonical128_ps_next
 
     vmovups [rdi], ymm3
@@ -87,12 +89,12 @@ fill_canonical128_ps:
     sub rsi, 8
 
     cmp rsi, 8
-    jge .Lfc128loop8
+    jge .loop8
 
     ; last <8 elements
-.Lfc128pslast:
+.last:
     test rsi, rsi
-    jz .Lfc128psend
+    jz .end
     call fill_canonical128_ps_next
 
     vmovd xmm2, esi
@@ -100,7 +102,7 @@ fill_canonical128_ps:
     vpcmpgtd ymm2, ymm2, ymm8
     vpmaskmovd [rdi], ymm2, ymm3
 
-.Lfc128psend:
+.end:
     ; save rng state
     vmovups [rdx], ymm0
     vmovups [rdx+0x20], ymm1
@@ -160,15 +162,15 @@ fill_canonical128_pd:
     vmovaps ymm8, [fc128_64]
     vmovaps ymm9, [fc128_and_pd]
 
-    ; space to spill two ymm registers on the stack
+    ; space to spill ymm register on the stack
     sub rsp, 0x20
 
     ; less than 4 remaining?
     cmp rsi, 4
-    jl .Lfc128pdlast
+    jl .last
 
     ; 4 loop
-.Lfc128loop4:
+.loop4:
     call fill_canonical128_pd_next
 
     vmovups [rdi], ymm3
@@ -176,12 +178,12 @@ fill_canonical128_pd:
     sub rsi, 4
 
     cmp rsi, 4
-    jge .Lfc128loop4
+    jge .loop4
 
     ; last <4 elements
-.Lfc128pdlast:
+.last:
     test rsi, rsi
-    jz .Lfc128pdend
+    jz .end
     call fill_canonical128_pd_next
 
     vmovq xmm2, rsi
@@ -189,7 +191,7 @@ fill_canonical128_pd:
     vpcmpgtq ymm2, ymm2, ymm8
     vpmaskmovq [rdi], ymm2, ymm3
 
-.Lfc128pdend:
+.end:
     ; save rng state
     vmovups [rdx], ymm0
     vmovups [rdx+0x20], ymm1
@@ -248,6 +250,196 @@ fill_canonical128_pd_next:
 
 
 
+
+
+    align 16
+fill_canonical1024_ps:
+    ; load rng state
+    mov rax, [rdx+0x200]
+    vmovups ymm0, [rdx+rax]
+    mov rcx, rax
+    add rcx, 0x20
+    and rcx, 0x1e0
+    vmovups ymm1, [rdx+rcx]
+    vmovaps ymm2, [fc128_ps]
+    vmovaps ymm3, [fc128_32]
+    vmovaps ymm4, [fc128_add_ps]
+    vmovaps ymm5, [xs1024lo]
+    vmovaps ymm6, [xs1024hi]
+
+    ; less than 8 remaining?
+    cmp rsi, 8
+    jl .last
+
+    ; 8 loop
+.loop8:
+    mov rax, rcx
+    call fill_canonical1024_ps_next
+
+    vmovups [rdi], ymm7
+    add rdi, 0x20
+    sub rsi, 8
+
+    cmp rsi, 8
+    jge .loop8
+
+    ; last <8 elements
+.last:
+    test rsi, rsi
+    jz .end
+    mov rax, rcx
+    call fill_canonical1024_ps_next
+
+    vmovd xmm8, esi
+    vpbroadcastd ymm8, xmm8
+    vpcmpgtd ymm8, ymm8, ymm3
+    vpmaskmovd [rdi], ymm8, ymm7
+
+.end:
+    ; save rng state
+    vmovups [rdx+rax], ymm0
+    vmovups [rdx+rcx], ymm1
+    mov [rdx+0x200], rax
+    ret
+
+    align 16
+fill_canonical1024_ps_next:
+    vpsllq  ymm7, ymm1, 31
+    vpxor   ymm1, ymm7
+    vpsrlq  ymm8, ymm0, 30
+    vpxor   ymm0, ymm8
+    vpsrlq  ymm7, ymm1, 11
+    vpxor   ymm1, ymm7
+    vpxor   ymm0, ymm1
+
+    mov rcx, rax
+    vmovups [rdx+rax], ymm0
+    add rcx, 0x20
+    and rcx, 0x1e0
+    vmovups ymm1, [rdx+rcx]
+
+    vpsrlq   ymm8, ymm7, 32
+    vpmuludq ymm8, ymm5
+    vpmuludq ymm9, ymm7, ymm6
+    vpaddq   ymm8, ymm9
+    vpmuludq ymm10, ymm7, ymm5
+    vpsllq   ymm8, 32
+    vpaddq   ymm7, ymm8, ymm10
+
+    vxorps    ymm8, ymm8
+    vcvtdq2ps ymm9, ymm7
+    vpcmpgtd  ymm8, ymm7
+    vaddps    ymm7, ymm9, ymm4
+    vblendvps ymm7, ymm9, ymm7, ymm8
+
+    vpsubd    ymm7, ymm2
+    ret
+
+
+
+
+
+    align 16
+fill_canonical1024_pd:
+    ; load rng state
+    mov rax, [rdx+0x200]
+    vmovups ymm0, [rdx+rax]
+    mov rcx, rax
+    add rcx, 0x20
+    and rcx, 0x1e0
+    vmovups ymm1, [rdx+rcx]
+    vmovaps ymm2, [fc128_pd]
+    vmovaps ymm3, [fc128_64]
+    vmovaps ymm4, [fc128_add_pd]
+    vmovaps ymm5, [xs1024lo]
+    vmovaps ymm6, [xs1024hi]
+
+    ; space to spill ymm register on the stack
+    sub rsp, 0x20
+
+    ; less than 4 remaining?
+    cmp rsi, 4
+    jl .last
+
+    ; 4 loop
+.loop4:
+    mov rax, rcx
+    call fill_canonical1024_pd_next
+
+    vmovups [rdi], ymm7
+    add rdi, 0x20
+    sub rsi, 4
+
+    cmp rsi, 4
+    jge .loop4
+
+    ; last <4 elements
+.last:
+    test rsi, rsi
+    jz .end
+    mov rax, rcx
+    call fill_canonical1024_pd_next
+
+    vmovq xmm8, rsi
+    vpbroadcastq ymm8, xmm8
+    vpcmpgtq ymm8, ymm8, ymm3
+    vpmaskmovq [rdi], ymm8, ymm7
+
+.end:
+    ; save rng state
+    vmovups [rdx+rax], ymm0
+    vmovups [rdx+rcx], ymm1
+    mov [rdx+0x200], rax
+    ; restore stack pointer
+    add rsp, 0x20
+    ret
+
+    align 16
+fill_canonical1024_pd_next:
+    vpsllq  ymm7, ymm1, 31
+    vpxor   ymm1, ymm7
+    vpsrlq  ymm8, ymm0, 30
+    vpxor   ymm0, ymm8
+    vpsrlq  ymm7, ymm1, 11
+    vpxor   ymm1, ymm7
+    vpxor   ymm0, ymm1
+
+    mov rcx, rax
+    vmovups [rdx+rax], ymm0
+    add rcx, 0x20
+    and rcx, 0x1e0
+    vmovups ymm1, [rdx+rcx]
+
+    vpsrlq   ymm8, ymm7, 32
+    vpmuludq ymm8, ymm5
+    vpmuludq ymm9, ymm7, ymm6
+    vpaddq   ymm8, ymm9
+    vpmuludq ymm10, ymm7, ymm5
+    vpsllq   ymm8, 32
+    vpaddq   ymm7, ymm8, ymm10
+
+    vmovups   [rsp+0x08], ymm7
+    vxorps    ymm8, ymm8
+    vpcmpgtq  ymm8, ymm7
+
+    vcvtsi2sd xmm7, qword [rsp+0x08]
+    vmovq     [rsp+0x08], xmm7
+    vcvtsi2sd xmm9, qword [rsp+0x10]
+    vmovq     [rsp+0x10], xmm9
+    vcvtsi2sd xmm10, qword [rsp+0x18]
+    vmovq     [rsp+0x18], xmm10
+    vcvtsi2sd xmm11, qword [rsp+0x20]
+    vmovq     [rsp+0x20], xmm11
+
+    vmovups   ymm7, [rsp+0x08]
+    vaddpd    ymm9, ymm7, ymm4
+    vblendvpd ymm7, ymm7, ymm9, ymm8
+
+    vpsubq    ymm7, ymm2
+    ret
+
+
+
     section .data
     align 32
 xs1024hi: times 4 dq 0x00000000106689d4
@@ -256,8 +448,10 @@ xs1024lo: times 4 dq 0x000000005497fdb5
 fc128_ps: times 8 dd 32<<23
 fc128_32: dd 0, 1, 2, 3, 4, 5, 6, 7
 fc128_and_ps:times 8 dd 1
+fc128_add_ps:times 8 dd 0x1.0p32
 
 fc128_pd: times 4 dq 64<<52
 fc128_64: dq 0, 1, 2, 3
 fc128_and_pd:times 4 dq 1
+fc128_add_pd:times 4 dq 0x1.0p64
 

@@ -25,6 +25,9 @@ __m256i xorshift1024_next(xorshift1024_t*);
 int fill_canonical128_ps(float*, size_t, xorshift128_t*);
 int fill_canonical128_pd(double*, size_t, xorshift128_t*);
 
+int fill_canonical1024_ps(float*, size_t, xorshift1024_t*);
+int fill_canonical1024_pd(double*, size_t, xorshift1024_t*);
+
 #ifdef __cplusplus
 }
 #endif

@@ -39,6 +39,9 @@ uint64_t scalar_xorshift1024_next() {
     return xorshift1024_state[xorshift1024_idx] * 1181783497276652981LL;
 }
 
+
+
+
 TEST(rand, xorshift128) {
     xorshift128_t state;
     xorshift128_state[0] = 1;
@@ -79,6 +82,9 @@ TEST(rand, xorshift1024) {
     }
 }
 
+
+
+
 TEST(fill_canonical128_ps, BufferSizeControl) {
     xorshift128_t state;
     for(int i = 0; i < 4; ++i) {
@@ -99,7 +105,7 @@ TEST(fill_canonical128_ps, BufferSizeControl) {
         EXPECT_EQ(0, buffer[i]);
 }
 
-TEST(fill_canonical128_ps, Output) {
+TEST(fill_canonical128_ps, Distribution) {
     constexpr size_t N = 1ull<<22;
     xorshift128_t state;
     FILE *f = fopen("/dev/urandom", "rb");
@@ -112,7 +118,7 @@ TEST(fill_canonical128_ps, Output) {
 
     for(size_t i = 0; i < N; ++i) {
         EXPECT_GE(buffer[i], 0.0f);
-        EXPECT_LT(buffer[i], 1.0f);
+        EXPECT_LE(buffer[i], 1.0f);
     }
 
     double mean = 0.0;
@@ -120,8 +126,54 @@ TEST(fill_canonical128_ps, Output) {
         mean += buffer[i];
     }
     mean /= N;
-    EXPECT_NEAR(mean, 0.5, 0.01);
+    EXPECT_NEAR(mean, 0.5, 0.001);
 }
+
+TEST(fill_canonical128_ps, Repeatable) {
+    xorshift128_t state1;
+    FILE *f = fopen("/dev/urandom", "rb");
+    fread(state1.s, sizeof(uint64_t), 2*4, f);
+    fclose(f);
+
+    xorshift128_t state2 = state1;
+
+    std::vector<float> buffer(32);
+
+    fill_canonical128_ps(buffer.data() +  0, 16, &state1);
+    fill_canonical128_ps(buffer.data() + 16, 16, &state2);
+
+    for(int i = 0; i < 16; ++i) {
+        EXPECT_EQ(buffer[i], buffer[i+16]);
+    }
+    for(int i = 0; i < 2*4; ++i) {
+        EXPECT_EQ(state1.s[i], state2.s[i]);
+    }
+}
+
+TEST(fill_canonical128_ps, Reentrant) {
+    xorshift128_t state1;
+    FILE *f = fopen("/dev/urandom", "rb");
+    fread(state1.s, sizeof(uint64_t), 2*4, f);
+    fclose(f);
+
+    xorshift128_t state2 = state1;
+
+    std::vector<float> buffer(32);
+
+    fill_canonical128_ps(buffer.data() +  0,  8, &state1);
+    fill_canonical128_ps(buffer.data() +  8,  8, &state1);
+    fill_canonical128_ps(buffer.data() + 16, 16, &state2);
+
+    for(int i = 0; i < 16; ++i) {
+        EXPECT_EQ(buffer[i], buffer[i+16]);
+    }
+    for(int i = 0; i < 2*4; ++i) {
+        EXPECT_EQ(state1.s[i], state2.s[i]);
+    }
+}
+
+
+
 
 TEST(fill_canonical128_pd, BufferSizeControl) {
     xorshift128_t state;
@@ -141,7 +193,7 @@ TEST(fill_canonical128_pd, BufferSizeControl) {
     }
 }
 
-TEST(fill_canonical128_pd, Output) {
+TEST(fill_canonical128_pd, Distribution) {
     constexpr size_t N = 1ull<<21;
     xorshift128_t state;
     FILE *f = fopen("/dev/urandom", "rb");
@@ -154,7 +206,7 @@ TEST(fill_canonical128_pd, Output) {
 
     for(size_t i = 0; i < N; ++i) {
         EXPECT_GE(buffer[i], 0.0);
-        EXPECT_LT(buffer[i], 1.0);
+        EXPECT_LE(buffer[i], 1.0);
     }
 
     double mean = 0.0;
@@ -162,5 +214,197 @@ TEST(fill_canonical128_pd, Output) {
         mean += buffer[i];
     }
     mean /= N;
-    EXPECT_NEAR(mean, 0.5, 0.01);
+    EXPECT_NEAR(mean, 0.5, 0.001);
+}
+
+TEST(fill_canonical128_pd, Repeatable) {
+    xorshift128_t state1;
+    FILE *f = fopen("/dev/urandom", "rb");
+    fread(state1.s, sizeof(uint64_t), 2*4, f);
+    fclose(f);
+
+    xorshift128_t state2 = state1;
+
+    std::vector<double> buffer(16);
+
+    fill_canonical128_pd(buffer.data() + 0, 8, &state1);
+    fill_canonical128_pd(buffer.data() + 8, 8, &state2);
+
+    for(int i = 0; i < 8; ++i) {
+        EXPECT_EQ(buffer[i], buffer[i+8]);
+    }
+    for(int i = 0; i < 2*4; ++i) {
+        EXPECT_EQ(state1.s[i], state2.s[i]);
+    }
+}
+
+TEST(fill_canonical128_pd, Reentrant) {
+    xorshift128_t state1;
+    FILE *f = fopen("/dev/urandom", "rb");
+    fread(state1.s, sizeof(uint64_t), 2*4, f);
+    fclose(f);
+
+    xorshift128_t state2 = state1;
+
+    std::vector<double> buffer(16);
+
+    fill_canonical128_pd(buffer.data() + 0, 4, &state1);
+    fill_canonical128_pd(buffer.data() + 4, 4, &state1);
+    fill_canonical128_pd(buffer.data() + 8, 8, &state2);
+
+    for(int i = 0; i < 8; ++i) {
+        EXPECT_EQ(buffer[i], buffer[i+8]);
+    }
+    for(int i = 0; i < 2*4; ++i) {
+        EXPECT_EQ(state1.s[i], state2.s[i]);
+    }
+}
+
+
+
+
+TEST(fill_canonical1024_ps, Distribution) {
+    constexpr size_t N = 1ull<<22;
+    xorshift1024_t state;
+    FILE *f = fopen("/dev/urandom", "rb");
+    fread(state.s, sizeof(uint64_t), 16*4, f);
+    fclose(f);
+    state.p = 0;
+
+    std::vector<float> buffer(N);
+
+    fill_canonical1024_ps(buffer.data(), N, &state);
+
+    for(size_t i = 0; i < N; ++i) {
+        EXPECT_GE(buffer[i], 0.0f);
+        EXPECT_LE(buffer[i], 1.0f);
+    }
+
+    double mean = 0.0;
+    for(size_t i = 0; i < N; ++i) {
+        mean += buffer[i];
+    }
+    mean /= N;
+    EXPECT_NEAR(mean, 0.5, 0.001);
+}
+
+TEST(fill_canonical1024_ps, Repeatable) {
+    xorshift1024_t state1;
+    FILE *f = fopen("/dev/urandom", "rb");
+    fread(state1.s, sizeof(uint64_t), 16*4, f);
+    fclose(f);
+    state1.p = 0;
+
+    xorshift1024_t state2 = state1;
+
+    std::vector<float> buffer(32);
+
+    fill_canonical1024_ps(buffer.data()+ 0, 16, &state1);
+    fill_canonical1024_ps(buffer.data()+16, 16, &state2);
+
+    for(size_t i = 0; i < 16; ++i) {
+        EXPECT_EQ(buffer[i], buffer[i+16]);
+        EXPECT_EQ(state1.s[4*i+0], state2.s[4*i+0]);
+        EXPECT_EQ(state1.s[4*i+1], state2.s[4*i+1]);
+        EXPECT_EQ(state1.s[4*i+2], state2.s[4*i+2]);
+        EXPECT_EQ(state1.s[4*i+3], state2.s[4*i+3]);
+    }
+    EXPECT_EQ(state1.p, state2.p);
+}
+
+TEST(fill_canonical1024_ps, Reentrant) {
+    xorshift1024_t state1;
+    FILE *f = fopen("/dev/urandom", "rb");
+    fread(state1.s, sizeof(uint64_t), 16*4, f);
+    fclose(f);
+    state1.p = 0;
+
+    xorshift1024_t state2 = state1;
+
+    std::vector<float> buffer(32);
+
+    fill_canonical1024_ps(buffer.data()+ 0,  8, &state1);
+    fill_canonical1024_ps(buffer.data()+ 8,  8, &state1);
+    fill_canonical1024_ps(buffer.data()+16, 16, &state2);
+
+    for(size_t i = 0; i < 16; ++i) {
+        EXPECT_EQ(buffer[i], buffer[i+16]);
+        EXPECT_EQ(state1.s[i], state2.s[i]);
+    }
+}
+
+
+
+
+TEST(fill_canonical1024_pd, Distribution) {
+    constexpr size_t N = 1ull<<21;
+    xorshift1024_t state;
+    FILE *f = fopen("/dev/urandom", "rb");
+    fread(state.s, sizeof(uint64_t), 16*4, f);
+    fclose(f);
+    state.p = 0;
+
+    std::vector<double> buffer(N);
+
+    fill_canonical1024_pd(buffer.data(), N, &state);
+
+    for(size_t i = 0; i < N; ++i) {
+        EXPECT_GE(buffer[i], 0.0);
+        EXPECT_LE(buffer[i], 1.0);
+    }
+
+    double mean = 0.0;
+    for(size_t i = 0; i < N; ++i) {
+        mean += buffer[i];
+    }
+    mean /= N;
+    EXPECT_NEAR(mean, 0.5, 0.001);
+}
+
+TEST(fill_canonical1024_pd, Repeatable) {
+    xorshift1024_t state1;
+    FILE *f = fopen("/dev/urandom", "rb");
+    fread(state1.s, sizeof(uint64_t), 16*4, f);
+    fclose(f);
+    state1.p = 0;
+
+    xorshift1024_t state2 = state1;
+
+    std::vector<double> buffer(16);
+
+    fill_canonical1024_pd(buffer.data()+0, 8, &state1);
+    fill_canonical1024_pd(buffer.data()+8, 8, &state2);
+
+    for(size_t i = 0; i < 8; ++i) {
+        EXPECT_EQ(buffer[i], buffer[i+8]);
+        EXPECT_EQ(state1.s[8*i+0], state2.s[8*i+0]);
+        EXPECT_EQ(state1.s[8*i+1], state2.s[8*i+1]);
+        EXPECT_EQ(state1.s[8*i+2], state2.s[8*i+2]);
+        EXPECT_EQ(state1.s[8*i+3], state2.s[8*i+3]);
+        EXPECT_EQ(state1.s[8*i+4], state2.s[8*i+4]);
+        EXPECT_EQ(state1.s[8*i+5], state2.s[8*i+5]);
+        EXPECT_EQ(state1.s[8*i+6], state2.s[8*i+6]);
+        EXPECT_EQ(state1.s[8*i+7], state2.s[8*i+7]);
+    }
+    EXPECT_EQ(state1.p, state2.p);
+}
+
+TEST(fill_canonical1024_pd, Reentrant) {
+    xorshift1024_t state1;
+    FILE *f = fopen("/dev/urandom", "rb");
+    fread(state1.s, sizeof(uint64_t), 16*4, f);
+    fclose(f);
+    state1.p = 0;
+
+    xorshift1024_t state2 = state1;
+
+    std::vector<double> buffer(16);
+
+    fill_canonical1024_pd(buffer.data()+0, 4, &state1);
+    fill_canonical1024_pd(buffer.data()+4, 4, &state1);
+    fill_canonical1024_pd(buffer.data()+8, 8, &state2);
+
+    for(size_t i = 0; i < 8; ++i) {
+        EXPECT_EQ(buffer[i], buffer[i+8]);
+    }
 }
