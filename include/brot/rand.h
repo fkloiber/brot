@@ -29,12 +29,12 @@ int fill_canonical1024_ps(float*, size_t, xorshift1024_t*);
 int fill_canonical1024_pd(double*, size_t, xorshift1024_t*);
 
 int seed_xorshift128(xorshift128_t* r, uint64_t s) {
-    if(s == 0) return -1;
     for(int i = 0; i < 2*4; ++i) {
-        s ^= s >> 12;
-        s ^= s << 25;
-        s ^= s >> 27;
-        r->s[i] = s * 2685821657736338717ull;
+        s += 0x9E3779B97F4A7C15ull;
+        uint64_t z = s;
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ull;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBull;
+        r->s[i] = z ^ (z >> 31);
     }
     return 0;
 }
@@ -49,12 +49,12 @@ int seed_xorshift128_urandom(xorshift128_t* r) {
 }
 
 int seed_xorshift1024(xorshift1024_t* r, uint64_t s) {
-    if(s == 0) return -1;
     for(int i = 0; i < 16*4; ++i) {
-        s ^= s >> 12;
-        s ^= s << 25;
-        s ^= s >> 27;
-        r->s[i] = s * 2685821657736338717ull;
+        s += 0x9E3779B97F4A7C15ull;
+        uint64_t z = s;
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ull;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBull;
+        r->s[i] = z ^ (z >> 31);
     }
     r->p = 0;
     return 0;
