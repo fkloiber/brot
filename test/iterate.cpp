@@ -5,29 +5,30 @@
 #include <gtest/gtest.h>
 #include <brot/iterate.h>
 
-TEST(test_in_M_ps, test_in_M_ps)
+TEST(escape_test_ps, escape_test_ps)
 {
-    std::vector<float> c(16);
+    std::vector<float> cr(8);
+    std::vector<float> ci(8);
     std::vector<uint32_t> i(8);
 
-    c[ 0] =  0.0f;
-    c[ 8] =  0.0f;
-    c[ 1] =  2.0f;
-    c[ 9] =  2.5f;
-    c[ 2] =  1.0f;
-    c[10] =  0.0f;
-    c[ 3] = -1.0f;
-    c[11] =  0.0f;
-    c[ 4] =  0.0f;
-    c[12] =  1.0f;
-    c[ 5] =  0.0f;
-    c[13] = -1.0f;
-    c[ 6] = -0.75f;
-    c[14] =  0.1f;
-    c[ 7] =  0.275f;
-    c[15] =  0.0f;
+    cr[0] =  0.0f;
+    ci[0] =  0.0f;
+    cr[1] =  2.0f;
+    ci[1] =  2.5f;
+    cr[2] =  1.0f;
+    ci[2] =  0.0f;
+    cr[3] = -1.0f;
+    ci[3] =  0.0f;
+    cr[4] =  0.0f;
+    ci[4] =  1.0f;
+    cr[5] =  0.0f;
+    ci[5] = -1.0f;
+    cr[6] = -0.75f;
+    ci[6] =  0.1f;
+    cr[7] =  0.275f;
+    ci[7] =  0.0f;
 
-    test_in_M_ps(c.data(), i.data(), 8, 100, 2.0f);
+    escape_test_ps(cr.data(), ci.data(), i.data(), 8, 100, 2.0f);
     EXPECT_EQ(i[0], 100u);
     EXPECT_EQ(i[1],   0u);
     EXPECT_EQ(i[2],   2u);

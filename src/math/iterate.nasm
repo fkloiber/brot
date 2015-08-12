@@ -1,39 +1,39 @@
-    global test_in_M_ps
+    global escape_test_ps
 
     section .text
 
-    align 16
-test_in_M_ps:
-    ; int test_in_M_ps(const float* points, uint32_t* in, uint64_t size,
-    ;    uint32_t maxiter, float rad)
-    ; Takes an array of complex values with single precision, _points_, and
-    ; iterates them through the complex quadratic polynomial
-    ; z_n+1 = z_n^2 + c, z_0 = 0
-    ; to a maximum of _maxiter_ iterations.
-    ; It saves the number of the iteration the points escape the circle of
-    ; radius _rad_ in the array _in_. If a point doesn't escape in _maxiter_
-    ; iterations that value will be saved instead.
-    ; The complex values are layed out in memory such that 8 imagenary values
-    ; follow their respective 8 real values:
-    ; (rrrrrrrriiiiiiii)(rrrrrrrriiiiiiii)(rrrrrrrriiiiiiii)
-    ; _size_ is the length of the _in_ array (thus the _points_ array
-    ; contains 2*_size_ single precision values). It must be a multiple of 8.
 
+    align 16
+escape_test_ps:
+    ; int escape_test_ps(const float* cr, const float* ci, uint32_t* ic,
+    ;     uint64_t size, uint32_t maxiter, float rad)
+    ; For each complex value cr[n] + i*ci[n] iterates over the complex quadratic
+    ; polynomial
+    ; z_n+1 = z_n^2 + c, z_0 = 0
+    ; and writes the iteration count where the point escapes the cricle of
+    ; radius rad to ic[n]. If the point doesn't escape within maxiter iterations
+    ; that value is written instead.
+    ; The number of points (size) must be a multiple of 8.
     xor rax, rax
 
-    ; _points_ is nullptr
+    ; cr is nullptr
     sub rax, 1
     test rdi, rdi
     jz .exit
 
-    ; _in_ is nullptr
+    ; ci is nullptr
     sub rax, 1
     test rsi, rsi
     jz .exit
 
+    ; ic is nullptr
+    sub rax, 1
+    test rdx, rdx
+    jz .exit
+
     ; _size_ is not 0 mod 8
     sub rax, 1
-    test rdx, 0x07
+    test rcx, 0x07
     jnz .exit
 
 
@@ -42,20 +42,20 @@ test_in_M_ps:
                        ; squared norm
 
 
-    shl rdx, 2
+    shl rcx, 2
     xor rax,rax
 
 .outer_loop:
-    vxorps  ymm1, ymm1             ; z_r
-    vxorps  ymm2, ymm2             ; z_i
-    vmovups ymm3, [rdi+2*rax+0x00] ; c_r
-    vmovups ymm4, [rdi+2*rax+0x20] ; c_i
-    vxorps  ymm5, ymm5             ; escape counter
+    vxorps  ymm1, ymm1      ; z_r
+    vxorps  ymm2, ymm2      ; z_i
+    vmovups ymm3, [rdi+rax] ; c_r
+    vmovups ymm4, [rsi+rax] ; c_i
+    vxorps  ymm5, ymm5      ; escape counter
     vxorps  ymm8, ymm8
     vxorps  ymm9, ymm9
 
 
-    xor r8, r8
+    xor r9, r9
 
     ; calculates a single iteration of the complex polynomial
     ; z_n+1 = z_n^2 + c = z_r^2 - z_i^2 + c_r + i(2*z_r*z_i + c_i)
@@ -77,14 +77,14 @@ test_in_M_ps:
     vcmpps ymm7, ymm0, 18 ; _CMP_LE_OQ
     vpsubd ymm5, ymm7
 
-    add r8, 1
-    cmp r8, rcx
+    add r9, 1
+    cmp r9, r8
     jl .inner_loop
 
-    vmovups [rsi+rax], ymm5
+    vmovups [rdx+rax], ymm5
 
     add rax, 0x20
-    cmp rax, rdx
+    cmp rax, rcx
     jl .outer_loop
 
     xor rax, rax

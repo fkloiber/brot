@@ -5,8 +5,8 @@
 extern "C"{
 #endif
 
-int test_in_M_ps(const float* points, uint32_t* in, uint64_t size,
-    uint32_t maxiter, float rad);
+int escape_test_ps(const float* cr, const float* ci, uint32_t* ic,
+    uint64_t size, uint32_t maxiter, float rad);
 
 #ifdef __cplusplus
 }
