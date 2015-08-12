@@ -42,6 +42,7 @@ uint64_t scalar_xorshift1024_next() {
 
 
 
+
 TEST(rand, xorshift128) {
     xorshift128_t state;
     xorshift128_state[0] = 1;
@@ -120,11 +121,15 @@ TEST(fill_canonical128_ps, Distribution) {
     }
 
     double mean = 0.0;
+    double var  = 0.0;
     for(size_t i = 0; i < N; ++i) {
         mean += buffer[i];
+        var  += buffer[i] * buffer[i];
     }
     mean /= N;
+    var = var/N - mean*mean;
     EXPECT_NEAR(mean, 0.5, 0.001);
+    EXPECT_NEAR(var, 1.0/12, 0.0001);
 }
 
 TEST(fill_canonical128_ps, Repeatable) {
@@ -202,11 +207,15 @@ TEST(fill_canonical128_pd, Distribution) {
     }
 
     double mean = 0.0;
+    double var  = 0.0;
     for(size_t i = 0; i < N; ++i) {
         mean += buffer[i];
+        var  += buffer[i] * buffer[i];
     }
     mean /= N;
+    var = var/N - mean*mean;
     EXPECT_NEAR(mean, 0.5, 0.001);
+    EXPECT_NEAR(var, 1.0/12, 0.0001);
 }
 
 TEST(fill_canonical128_pd, Repeatable) {
@@ -266,11 +275,15 @@ TEST(fill_canonical1024_ps, Distribution) {
     }
 
     double mean = 0.0;
+    double var  = 0.0;
     for(size_t i = 0; i < N; ++i) {
         mean += buffer[i];
+        var  += buffer[i] * buffer[i];
     }
     mean /= N;
+    var = var/N - mean*mean;
     EXPECT_NEAR(mean, 0.5, 0.001);
+    EXPECT_NEAR(var, 1.0/12, 0.0001);
 }
 
 TEST(fill_canonical1024_ps, Repeatable) {
@@ -330,11 +343,15 @@ TEST(fill_canonical1024_pd, Distribution) {
     }
 
     double mean = 0.0;
+    double var  = 0.0;
     for(size_t i = 0; i < N; ++i) {
         mean += buffer[i];
+        var  += buffer[i] * buffer[i];
     }
     mean /= N;
+    var = var/N - mean*mean;
     EXPECT_NEAR(mean, 0.5, 0.001);
+    EXPECT_NEAR(var, 1.0/12, 0.0001);
 }
 
 TEST(fill_canonical1024_pd, Repeatable) {
