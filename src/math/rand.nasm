@@ -76,6 +76,14 @@ fill_canonical128_ps:
     vmovaps ymm8, [fc128_32]
     vmovaps ymm9, [fc128_and_ps]
 
+    ; save old rounding mode and set current one to round to zero
+    sub       rsp, 8
+    vstmxcsr [rsp]
+    vstmxcsr [rsp+4]
+    or dword [rsp+4], 3 << 13
+    vldmxcsr [rsp+4]
+
+
     ; less than 8 remaining?
     cmp rsi, 8
     jl .last
@@ -106,6 +114,11 @@ fill_canonical128_ps:
     ; save rng state
     vmovups [rdx], ymm0
     vmovups [rdx+0x20], ymm1
+
+    ; restore rounding mode
+    vldmxcsr [rsp]
+    add       rsp, 8
+
     ret
 
     align 16
@@ -142,7 +155,7 @@ fill_canonical128_ps_next:
     vaddps    ymm3, ymm3
     vblendvps ymm3, ymm5, ymm3, ymm2
 
-    vpsubd    ymm3, ymm4
+    vmulps    ymm3, ymm4
     ret
 
 
@@ -162,8 +175,14 @@ fill_canonical128_pd:
     vmovaps ymm8, [fc128_64]
     vmovaps ymm9, [fc128_and_pd]
 
-    ; space to spill ymm register on the stack
-    sub rsp, 0x20
+    ; space to spill ymm and mxcsr registers on the stack
+    sub rsp, 0x28
+
+    ; save old rounding mode and set current one to round to zero
+    vstmxcsr [rsp+0x20]
+    vstmxcsr [rsp+0x24]
+    or dword [rsp+0x24], 3 << 13
+    vldmxcsr [rsp+0x24]
 
     ; less than 4 remaining?
     cmp rsi, 4
@@ -195,8 +214,12 @@ fill_canonical128_pd:
     ; save rng state
     vmovups [rdx], ymm0
     vmovups [rdx+0x20], ymm1
+
+    ; restore rounding mode
+    vldmxcsr [rsp+0x20]
+
     ; restore stack pointer
-    add rsp, 0x20
+    add rsp, 0x28
 
     ret
 
@@ -245,7 +268,7 @@ fill_canonical128_pd_next:
     vaddpd  ymm3, ymm5, ymm5
     vblendvpd ymm3, ymm5, ymm3, ymm2
 
-    vpsubq ymm3, ymm4
+    vmulpd ymm3, ymm4
     ret
 
 
@@ -266,6 +289,13 @@ fill_canonical1024_ps:
     vmovaps ymm4, [fc128_add_ps]
     vmovaps ymm5, [xs1024lo]
     vmovaps ymm6, [xs1024hi]
+
+    ; save old rounding mode and set current one to round to zero
+    sub       rsp, 8
+    vstmxcsr [rsp]
+    vstmxcsr [rsp+4]
+    or dword [rsp+4], 3 << 13
+    vldmxcsr [rsp+4]
 
     ; less than 8 remaining?
     cmp rsi, 8
@@ -300,6 +330,11 @@ fill_canonical1024_ps:
     vmovups [rdx+rax], ymm0
     vmovups [rdx+rcx], ymm1
     mov [rdx+0x200], rax
+
+    ; restore rounding mode
+    vldmxcsr [rsp]
+    add       rsp, 8
+
     ret
 
     align 16
@@ -332,7 +367,7 @@ fill_canonical1024_ps_next:
     vaddps    ymm7, ymm9, ymm4
     vblendvps ymm7, ymm9, ymm7, ymm8
 
-    vpsubd    ymm7, ymm2
+    vmulps    ymm7, ymm2
     ret
 
 
@@ -354,8 +389,14 @@ fill_canonical1024_pd:
     vmovaps ymm5, [xs1024lo]
     vmovaps ymm6, [xs1024hi]
 
-    ; space to spill ymm register on the stack
-    sub rsp, 0x20
+    ; space to spill ymm and mxcsr registers on the stack
+    sub rsp, 0x28
+
+    ; save old rounding mode and set current one to round to zero
+    vstmxcsr [rsp+0x20]
+    vstmxcsr [rsp+0x24]
+    or dword [rsp+0x24], 3 << 13
+    vldmxcsr [rsp+0x24]
 
     ; less than 4 remaining?
     cmp rsi, 4
@@ -390,8 +431,13 @@ fill_canonical1024_pd:
     vmovups [rdx+rax], ymm0
     vmovups [rdx+rcx], ymm1
     mov [rdx+0x200], rax
+
+    ; restore rounding mode
+    vldmxcsr [rsp+0x20]
+
     ; restore stack pointer
-    add rsp, 0x20
+    add rsp, 0x28
+
     ret
 
     align 16
@@ -435,7 +481,7 @@ fill_canonical1024_pd_next:
     vaddpd    ymm9, ymm7, ymm4
     vblendvpd ymm7, ymm7, ymm9, ymm8
 
-    vpsubq    ymm7, ymm2
+    vmulpd    ymm7, ymm2
     ret
 
 
@@ -445,12 +491,12 @@ fill_canonical1024_pd_next:
 xs1024hi: times 4 dq 0x00000000106689d4
 xs1024lo: times 4 dq 0x000000005497fdb5
 
-fc128_ps: times 8 dd 32<<23
+fc128_ps: times 8 dd 0x1.0p-32
 fc128_32: dd 0, 1, 2, 3, 4, 5, 6, 7
 fc128_and_ps:times 8 dd 1
 fc128_add_ps:times 8 dd 0x1.0p32
 
-fc128_pd: times 4 dq 64<<52
+fc128_pd: times 4 dq 0x1.0p-64
 fc128_64: dq 0, 1, 2, 3
 fc128_and_pd:times 4 dq 1
 fc128_add_pd:times 4 dq 0x1.0p64

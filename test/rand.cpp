@@ -116,7 +116,7 @@ TEST(fill_canonical128_ps, Distribution) {
 
     for(size_t i = 0; i < N; ++i) {
         EXPECT_GE(buffer[i], 0.0f);
-        EXPECT_LE(buffer[i], 1.0f);
+        EXPECT_LT(buffer[i], 1.0f);
     }
 
     double mean = 0.0;
@@ -198,7 +198,7 @@ TEST(fill_canonical128_pd, Distribution) {
 
     for(size_t i = 0; i < N; ++i) {
         EXPECT_GE(buffer[i], 0.0);
-        EXPECT_LE(buffer[i], 1.0);
+        EXPECT_LT(buffer[i], 1.0);
     }
 
     double mean = 0.0;
@@ -262,7 +262,7 @@ TEST(fill_canonical1024_ps, Distribution) {
 
     for(size_t i = 0; i < N; ++i) {
         EXPECT_GE(buffer[i], 0.0f);
-        EXPECT_LE(buffer[i], 1.0f);
+        EXPECT_LT(buffer[i], 1.0f);
     }
 
     double mean = 0.0;
@@ -326,7 +326,7 @@ TEST(fill_canonical1024_pd, Distribution) {
 
     for(size_t i = 0; i < N; ++i) {
         EXPECT_GE(buffer[i], 0.0);
-        EXPECT_LE(buffer[i], 1.0);
+        EXPECT_LT(buffer[i], 1.0);
     }
 
     double mean = 0.0;
