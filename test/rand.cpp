@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <chrono>
 #include <vector>
+#include <algorithm>
 
 #include <gtest/gtest.h>
 #include <brot/rand.h>
@@ -129,7 +130,9 @@ TEST(fill_canonical128_ps, Distribution) {
     mean /= N;
     var = var/N - mean*mean;
     EXPECT_NEAR(mean, 0.5, 0.001);
-    EXPECT_NEAR(var, 1.0/12, 0.0001);
+    EXPECT_NEAR(var, 1.0/12, 0.0002);
+    std::nth_element(buffer.begin(), buffer.begin()+N/2, buffer.end());
+    EXPECT_NEAR((double)buffer[N/2], 0.5, 0.001);
 }
 
 TEST(fill_canonical128_ps, Repeatable) {
@@ -215,7 +218,9 @@ TEST(fill_canonical128_pd, Distribution) {
     mean /= N;
     var = var/N - mean*mean;
     EXPECT_NEAR(mean, 0.5, 0.001);
-    EXPECT_NEAR(var, 1.0/12, 0.0001);
+    EXPECT_NEAR(var, 1.0/12, 0.0002);
+    std::nth_element(buffer.begin(), buffer.begin()+N/2, buffer.end());
+    EXPECT_NEAR(buffer[N/2], 0.5, 0.001);
 }
 
 TEST(fill_canonical128_pd, Repeatable) {
@@ -283,7 +288,9 @@ TEST(fill_canonical1024_ps, Distribution) {
     mean /= N;
     var = var/N - mean*mean;
     EXPECT_NEAR(mean, 0.5, 0.001);
-    EXPECT_NEAR(var, 1.0/12, 0.0001);
+    EXPECT_NEAR(var, 1.0/12, 0.0002);
+    std::nth_element(buffer.begin(), buffer.begin()+N/2, buffer.end());
+    EXPECT_NEAR((double)buffer[N/2], 0.5, 0.001);
 }
 
 TEST(fill_canonical1024_ps, Repeatable) {
@@ -351,7 +358,9 @@ TEST(fill_canonical1024_pd, Distribution) {
     mean /= N;
     var = var/N - mean*mean;
     EXPECT_NEAR(mean, 0.5, 0.001);
-    EXPECT_NEAR(var, 1.0/12, 0.0001);
+    EXPECT_NEAR(var, 1.0/12, 0.0002);
+    std::nth_element(buffer.begin(), buffer.begin()+N/2, buffer.end());
+    EXPECT_NEAR(buffer[N/2], 0.5, 0.001);
 }
 
 TEST(fill_canonical1024_pd, Repeatable) {
