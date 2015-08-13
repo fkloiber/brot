@@ -1,4 +1,5 @@
     global escape_test_ps
+    global bulb_test_ps
 
     section .text
 
@@ -31,7 +32,7 @@ escape_test_ps:
     test rdx, rdx
     jz .exit
 
-    ; _size_ is not 0 mod 8
+    ; size is not 0 mod 8
     sub rax, 1
     test rcx, 0x07
     jnz .exit
@@ -41,8 +42,9 @@ escape_test_ps:
     vmulps  ymm0, ymm0 ; square the radius to later compare with the
                        ; squared norm
 
-
-    shl rcx, 2
+    mov r9, r8
+    mov r8, rcx
+    shl r8, 2
     xor rax,rax
 
 .outer_loop:
@@ -55,7 +57,7 @@ escape_test_ps:
     vxorps  ymm9, ymm9
 
 
-    xor r9, r9
+    mov rcx, r9
 
     ; calculates a single iteration of the complex polynomial
     ; z_n+1 = z_n^2 + c = z_r^2 - z_i^2 + c_r + i(2*z_r*z_i + c_i)
@@ -77,16 +79,84 @@ escape_test_ps:
     vcmpps ymm7, ymm0, 18 ; _CMP_LE_OQ
     vpsubd ymm5, ymm7
 
-    add r9, 1
-    cmp r9, r8
-    jl .inner_loop
+    loop .inner_loop
 
     vmovups [rdx+rax], ymm5
 
     add rax, 0x20
-    cmp rax, rcx
+    cmp rax, r8
     jl .outer_loop
 
     xor rax, rax
 .exit:
     ret
+
+
+
+
+    align 16
+bulb_test_ps:
+    ; int bulb_test_ps(const float* cr, const float* ci,
+    ;                  uint32_t* im, uint64_t size)
+    ; Tests whether the point defined by cr[n] + i*ci[n] is in either the main
+    ; cardoid or the period-2 bulb or not.
+    xor rax, rax
+
+    ; cr is nullptr
+    sub rax, 1
+    test rdi, rdi
+    jz .exit
+
+    ; ci is nullptr
+    sub rax, 1
+    test rsi, rsi
+    jz .exit
+
+    ; im is nullptr
+    sub rax, 1
+    test rdx, rdx
+    jz .exit
+
+    ; size is not 0 mod 8
+    sub rax, 1
+    test rcx, 0x07
+    jnz .exit
+
+    vmovaps ymm2, [ovfour_ps]
+    vmovaps ymm3, [ovsixteen_ps]
+    vmovaps ymm4, [one_ps]
+
+.loop:
+    vmovups ymm0, [rdi+4*rcx-4]
+    vmovups ymm1, [rsi+4*rcx-4]
+
+    vmulps ymm1, ymm1
+    vmulps ymm8, ymm2, ymm1
+
+    vsubps ymm5, ymm0, ymm2
+    vmulps ymm6, ymm5, ymm5
+    vaddps ymm6, ymm1
+    vaddps ymm7, ymm6, ymm5
+    vmulps ymm6, ymm7
+    vcmpltps ymm6, ymm8
+
+    vaddps ymm7, ymm0, ymm4
+    vmulps ymm7, ymm7
+    vaddps ymm7, ymm1
+    vcmpltps ymm7, ymm3
+
+    vpor ymm7, ymm6
+    vmovups [rdx+4*rcx-4], ymm7
+
+    loop .loop
+
+.exit:
+    ret
+
+
+
+    section .data
+    align 32
+ovfour_ps:    times 8 dd 0.25
+ovsixteen_ps: times 8 dd 0.0625
+one_ps:       times 8 dd 1.0
