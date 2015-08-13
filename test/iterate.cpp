@@ -5,7 +5,20 @@
 #include <gtest/gtest.h>
 #include <brot/iterate.h>
 
-TEST(escape_test_ps, escape_test_ps)
+TEST(escape_test_ps, error_codes)
+{
+    std::vector<float> cr(8);
+    std::vector<float> ci(8);
+    std::vector<uint32_t> ic(8);
+
+    EXPECT_EQ(escape_test_ps(cr.data(), ci.data(), ic.data(), 7, 100, 2.0f), -4);
+    EXPECT_EQ(escape_test_ps(cr.data(), ci.data(), nullptr, 8, 100, 2.0f), -3);
+    EXPECT_EQ(escape_test_ps(cr.data(), nullptr, ic.data(), 8, 100, 2.0f), -2);
+    EXPECT_EQ(escape_test_ps(nullptr, ci.data(), ic.data(), 8, 100, 2.0f), -1);
+    EXPECT_EQ(escape_test_ps(cr.data(), ci.data(), ic.data(), 8, 100, 2.0f),  0);
+}
+
+TEST(escape_test_ps, iteration_count)
 {
     std::vector<float> cr(8);
     std::vector<float> ci(8);
