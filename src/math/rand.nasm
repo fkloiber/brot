@@ -4,6 +4,8 @@
     global fill_canonical128_pd
     global fill_canonical1024_ps
     global fill_canonical1024_pd
+    global fill_uniform1024_ps
+    global fill_uniform1024_pd
 
     section .text
 
@@ -483,6 +485,257 @@ fill_canonical1024_pd_next:
 
     vmulpd    ymm7, ymm2
     ret
+
+
+
+
+
+    align 16
+fill_uniform1024_ps:
+    ; rdi:  pointer to float array to be filled
+    ; rsi:  size of the array to be filled
+    ; rdx:  xorshift1024 state pointer
+    ; ymm0: minimum value
+    ; ymm1: maximum value
+
+    ; calculate scale
+    vmovaps ymm2, [fc128_ps]
+    vbroadcastss ymm0, xmm0
+    vbroadcastss ymm1, xmm1
+    vsubps  ymm1, ymm0
+    vmulps  ymm2, ymm1
+    vmovaps ymm11, ymm0
+
+    ; load rng state
+    mov rax, [rdx+0x200]
+    vmovups ymm0, [rdx+rax]
+    mov rcx, rax
+    add rcx, 0x20
+    and rcx, 0x1e0
+    vmovups ymm1, [rdx+rcx]
+    vmovaps ymm3, [fc128_32]
+    vmovaps ymm4, [fc128_and_ps]
+    vmovaps ymm5, [xs1024lo]
+    vmovaps ymm6, [xs1024hi]
+
+    ; save old rounding mode and set current one to round to zero
+    sub       rsp, 8
+    vstmxcsr [rsp]
+    vstmxcsr [rsp+4]
+    or dword [rsp+4], 3 << 13
+    vldmxcsr [rsp+4]
+
+    ; less than 8 remaining?
+    cmp rsi, 8
+    jl .last
+
+    ; 8 loop
+.loop8:
+    mov rax, rcx
+    call fill_uniform1024_ps_next
+
+    vmovups [rdi], ymm7
+    add rdi, 0x20
+    sub rsi, 8
+
+    cmp rsi, 8
+    jge .loop8
+
+    ; last <8 elements
+.last:
+    test rsi, rsi
+    jz .end
+    mov rax, rcx
+    call fill_uniform1024_ps_next
+
+    vmovd xmm8, esi
+    vpbroadcastd ymm8, xmm8
+    vpcmpgtd ymm8, ymm8, ymm3
+    vpmaskmovd [rdi], ymm8, ymm7
+
+.end:
+    ; save rng state
+    vmovups [rdx+rax], ymm0
+    vmovups [rdx+rcx], ymm1
+    mov [rdx+0x200], rax
+
+    ; restore rounding mode
+    vldmxcsr [rsp]
+    add       rsp, 8
+
+    ret
+
+    align 16
+fill_uniform1024_ps_next:
+    vpsllq  ymm7, ymm1, 31
+    vpxor   ymm1, ymm7
+    vpsrlq  ymm8, ymm0, 30
+    vpxor   ymm0, ymm8
+    vpsrlq  ymm7, ymm1, 11
+    vpxor   ymm1, ymm7
+    vpxor   ymm0, ymm1
+
+    mov rcx, rax
+    vmovups [rdx+rax], ymm0
+    add rcx, 0x20
+    and rcx, 0x1e0
+    vmovups ymm1, [rdx+rcx]
+
+    vpsrlq   ymm8, ymm7, 32
+    vpmuludq ymm8, ymm5
+    vpmuludq ymm9, ymm7, ymm6
+    vpaddq   ymm8, ymm9
+    vpmuludq ymm10, ymm7, ymm5
+    vpsllq   ymm8, 32
+    vpaddq   ymm7, ymm8, ymm10
+
+    vxorps    ymm8, ymm8
+    vcvtdq2ps ymm9, ymm7
+    vpcmpgtd  ymm8, ymm7
+    vpsrld    ymm10, ymm7, 1
+    vandps    ymm7, ymm4
+    vorps     ymm7, ymm10
+    vcvtdq2ps ymm7, ymm7
+    vaddps    ymm7, ymm7
+    vblendvps ymm7, ymm9, ymm7, ymm8
+
+    vmulps    ymm7, ymm2
+    vaddps    ymm7, ymm11
+    ret
+
+
+
+
+
+    align 16
+fill_uniform1024_pd:
+    ; rdi:  pointer to double array to be filled
+    ; rsi:  size of the array to be filled
+    ; rdx:  xorshift1024 state pointer
+    ; ymm0: minimum value
+    ; ymm1: maximum value
+
+    ; calculate scale
+    vmovaps ymm2, [fc128_pd]
+    vbroadcastsd ymm0, xmm0
+    vbroadcastsd ymm1, xmm1
+    vsubpd  ymm1, ymm0
+    vmulpd  ymm2, ymm1
+    vmovaps ymm11, ymm0
+
+    ; load rng state
+    mov rax, [rdx+0x200]
+    vmovups ymm0, [rdx+rax]
+    mov rcx, rax
+    add rcx, 0x20
+    and rcx, 0x1e0
+    vmovups ymm1, [rdx+rcx]
+    vmovaps ymm3, [fc128_64]
+    vmovaps ymm4, [fc128_and_pd]
+    vmovaps ymm5, [xs1024lo]
+    vmovaps ymm6, [xs1024hi]
+
+    ; space to spill ymm and mxcsr registers on the stack
+    sub rsp, 0x28
+
+    ; save old rounding mode and set current one to round to zero
+    vstmxcsr [rsp+0x20]
+    vstmxcsr [rsp+0x24]
+    or dword [rsp+0x24], 3 << 13
+    vldmxcsr [rsp+0x24]
+
+    ; less than 4 remaining?
+    cmp rsi, 4
+    jl .last
+
+    ; 4 loop
+.loop4:
+    mov rax, rcx
+    call fill_uniform1024_pd_next
+
+    vmovups [rdi], ymm7
+    add rdi, 0x20
+    sub rsi, 4
+
+    cmp rsi, 4
+    jge .loop4
+
+    ; last <4 elements
+.last:
+    test rsi, rsi
+    jz .end
+    mov rax, rcx
+    call fill_uniform1024_pd_next
+
+    vmovq xmm8, rsi
+    vpbroadcastq ymm8, xmm8
+    vpcmpgtq ymm8, ymm8, ymm3
+    vpmaskmovq [rdi], ymm8, ymm7
+
+.end:
+    ; save rng state
+    vmovups [rdx+rax], ymm0
+    vmovups [rdx+rcx], ymm1
+    mov [rdx+0x200], rax
+
+    ; restore rounding mode
+    vldmxcsr [rsp+0x20]
+
+    ; restore stack pointer
+    add rsp, 0x28
+
+    ret
+
+    align 16
+fill_uniform1024_pd_next:
+    vpsllq  ymm7, ymm1, 31
+    vpxor   ymm1, ymm7
+    vpsrlq  ymm8, ymm0, 30
+    vpxor   ymm0, ymm8
+    vpsrlq  ymm7, ymm1, 11
+    vpxor   ymm1, ymm7
+    vpxor   ymm0, ymm1
+
+    mov rcx, rax
+    vmovups [rdx+rax], ymm0
+    add rcx, 0x20
+    and rcx, 0x1e0
+    vmovups ymm1, [rdx+rcx]
+
+    vpsrlq   ymm8, ymm7, 32
+    vpmuludq ymm8, ymm5
+    vpmuludq ymm9, ymm7, ymm6
+    vpaddq   ymm8, ymm9
+    vpmuludq ymm10, ymm7, ymm5
+    vpsllq   ymm8, 32
+    vpaddq   ymm7, ymm8, ymm10
+
+    vxorps     ymm8, ymm8
+    vmovups    [rsp+0x08], ymm7
+    vpcmpgtq   ymm8, ymm7
+    vpsrlq     ymm9, ymm7, 1
+    vandps     ymm7, ymm4
+    vorps      ymm7, ymm9
+    vpmaskmovq [rsp+0x08], ymm8, ymm7
+
+    vcvtsi2sd xmm7, qword [rsp+0x08]
+    vmovq     [rsp+0x08], xmm7
+    vcvtsi2sd xmm9, qword [rsp+0x10]
+    vmovq     [rsp+0x10], xmm9
+    vcvtsi2sd xmm10, qword [rsp+0x18]
+    vmovq     [rsp+0x18], xmm10
+    vcvtsi2sd xmm12, qword [rsp+0x20]
+    vmovq     [rsp+0x20], xmm12
+
+    vmovups   ymm9, [rsp+0x08]
+    vaddpd    ymm7, ymm9, ymm9
+    vblendvpd ymm7, ymm9, ymm7, ymm8
+
+    vmulpd    ymm7, ymm2
+    vaddpd    ymm7, ymm11
+    ret
+
+
 
 
 

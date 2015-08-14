@@ -404,3 +404,75 @@ TEST(fill_canonical1024_pd, Reentrant) {
         EXPECT_EQ(buffer[i], buffer[i+8]);
     }
 }
+
+
+
+
+TEST(fill_uniform1024_ps, Distribution) {
+    constexpr size_t N = 1ull<<22;
+    constexpr float a = 5.0f, b = 7.0f;
+    constexpr double exp_mean = ((double)a+b)*0.5;
+    constexpr double exp_mean_err = (exp_mean) * 0.002;
+    constexpr double exp_var = ((double)a-b)*((double)a-b)/12.0;
+    constexpr double exp_var_err = exp_var * 0.0025;
+    xorshift1024_t state;
+    seed_xorshift1024_urandom(&state);
+
+    std::vector<float> buffer(N);
+
+    fill_uniform1024_ps(buffer.data(), N, a, b, &state);
+
+    for(size_t i = 0; i < N; ++i) {
+        EXPECT_GE(buffer[i], a);
+        EXPECT_LT(buffer[i], b);
+    }
+
+    double mean = 0.0;
+    double var  = 0.0;
+    for(size_t i = 0; i < N; ++i) {
+        mean += buffer[i];
+        var  += buffer[i] * buffer[i];
+    }
+    mean /= N;
+    var = var/N - mean*mean;
+    EXPECT_NEAR(mean, exp_mean, exp_mean_err);
+    EXPECT_NEAR(var, exp_var, exp_var_err);
+    std::nth_element(buffer.begin(), buffer.begin()+N/2, buffer.end());
+    EXPECT_NEAR((double)buffer[N/2], exp_mean, exp_mean_err);
+}
+
+
+
+
+TEST(fill_uniform1024_pd, Distribution) {
+    constexpr size_t N = 1ull<<21;
+    constexpr double a = 5.0f, b = 7.0f;
+    constexpr double exp_mean = ((double)a+b)*0.5;
+    constexpr double exp_mean_err = (exp_mean) * 0.002;
+    constexpr double exp_var = ((double)a-b)*((double)a-b)/12.0;
+    constexpr double exp_var_err = exp_var * 0.0025;
+    xorshift1024_t state;
+    seed_xorshift1024_urandom(&state);
+
+    std::vector<double> buffer(N);
+
+    fill_uniform1024_pd(buffer.data(), N, a, b, &state);
+
+    for(size_t i = 0; i < N; ++i) {
+        EXPECT_GE(buffer[i], a);
+        EXPECT_LT(buffer[i], b);
+    }
+
+    double mean = 0.0;
+    double var  = 0.0;
+    for(size_t i = 0; i < N; ++i) {
+        mean += buffer[i];
+        var  += buffer[i] * buffer[i];
+    }
+    mean /= N;
+    var = var/N - mean*mean;
+    EXPECT_NEAR(mean, exp_mean, exp_mean_err);
+    EXPECT_NEAR(var, exp_var, exp_var_err);
+    std::nth_element(buffer.begin(), buffer.begin()+N/2, buffer.end());
+    EXPECT_NEAR((double)buffer[N/2], exp_mean, exp_mean_err);
+}

@@ -28,6 +28,9 @@ int fill_canonical128_pd(double*, size_t, xorshift128_t*);
 int fill_canonical1024_ps(float*, size_t, xorshift1024_t*);
 int fill_canonical1024_pd(double*, size_t, xorshift1024_t*);
 
+int fill_uniform1024_ps(float*, size_t, float, float, xorshift1024_t*);
+int fill_uniform1024_pd(double*, size_t, double, double, xorshift1024_t*);
+
 int seed_xorshift128(xorshift128_t* r, uint64_t s) {
     for(int i = 0; i < 2*4; ++i) {
         s += 0x9E3779B97F4A7C15ull;
