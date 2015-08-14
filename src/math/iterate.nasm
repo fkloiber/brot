@@ -222,9 +222,12 @@ bulb_test_ps:
     vmovaps ymm3, [ovsixteen_ps]
     vmovaps ymm4, [one_ps]
 
+    shl rcx, 2
+    xor rax, rax
+
 .loop:
-    vmovups ymm0, [rdi+4*rcx-4]
-    vmovups ymm1, [rsi+4*rcx-4]
+    vmovups ymm0, [rdi+rax]
+    vmovups ymm1, [rsi+rax]
 
     vmulps ymm1, ymm1
     vmulps ymm8, ymm2, ymm1
@@ -242,9 +245,11 @@ bulb_test_ps:
     vcmpltps ymm7, ymm3
 
     vpor ymm7, ymm6
-    vmovups [rdx+4*rcx-4], ymm7
+    vmovups [rdx+rax], ymm7
 
-    loop .loop
+    add rax, 0x20
+    cmp rax, rcx
+    jne .loop
 
     xor rax, rax
 .exit:
@@ -286,9 +291,12 @@ bulb_test_pd:
     vmovaps ymm3, [ovsixteen_ps]
     vmovaps ymm4, [one_ps]
 
+    shl rcx, 3
+    xor rax, rax
+
 .loop:
-    vmovups ymm0, [rdi+4*rcx-4]
-    vmovups ymm1, [rsi+4*rcx-4]
+    vmovups ymm0, [rdi+rax]
+    vmovups ymm1, [rsi+rax]
 
     vmulpd ymm1, ymm1
     vmulpd ymm8, ymm2, ymm1
@@ -306,9 +314,11 @@ bulb_test_pd:
     vcmpltpd ymm7, ymm3
 
     vpor ymm7, ymm6
-    vmovups [rdx+4*rcx-4], ymm7
+    vmovups [rdx+rax], ymm7
 
-    loop .loop
+    add rax, 0x20
+    cmp rax, rcx
+    jne .loop
 
     xor rax, rax
 .exit:
