@@ -287,9 +287,9 @@ bulb_test_pd:
     test rcx, 0x03
     jnz .exit
 
-    vmovaps ymm2, [ovfour_ps]
-    vmovaps ymm3, [ovsixteen_ps]
-    vmovaps ymm4, [one_ps]
+    vmovaps ymm2, [ovfour_pd]
+    vmovaps ymm3, [ovsixteen_pd]
+    vmovaps ymm4, [one_pd]
 
     shl rcx, 3
     xor rax, rax
@@ -650,3 +650,7 @@ write_orbits_pd:
 ovfour_ps:    times 8 dd 0.25
 ovsixteen_ps: times 8 dd 0.0625
 one_ps:       times 8 dd 1.0
+
+ovfour_pd:    times 4 dq 0.25
+ovsixteen_pd: times 4 dq 0.0625
+one_pd:       times 4 dq 1.0
