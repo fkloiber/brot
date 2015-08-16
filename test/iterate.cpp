@@ -54,10 +54,11 @@ TEST(escape_test_ps, iteration_count)
 }
 
 TEST(bulb_test_ps, test) {
-    std::vector<float> cr(256);
-    std::vector<float> ci(256);
-    std::vector<uint32_t> is(256);
-    std::vector<uint32_t> iv(256);
+    const uint32_t N = 1024;
+    std::vector<float> cr(N);
+    std::vector<float> ci(N);
+    std::vector<uint32_t> is(N);
+    std::vector<uint32_t> iv(N);
     std::random_device dev;
     std::mt19937 rng(dev());
     std::uniform_real_distribution<float> dist(-2.0f, 2.0f);
@@ -65,7 +66,7 @@ TEST(bulb_test_ps, test) {
     for(float& f : cr) f = dist(rng);
     for(float& f : ci) f = dist(rng);
 
-    for(int i = 0; i < 256; ++i) {
+    for(uint32_t i = 0; i < N; ++i) {
         float xm = cr[i] - 0.25f;
         float xp = cr[i] + 1.0f;
         float y2 = ci[i]*ci[i];
@@ -73,17 +74,18 @@ TEST(bulb_test_ps, test) {
         if(q*(q+xm) < 0.25f*y2 || xp*xp + y2 < 0.0625f)
             is[i] = -1;
     }
-    bulb_test_ps(cr.data(), ci.data(), iv.data(), 256);
-    for(int i = 0; i < 256; ++i) {
+    bulb_test_ps(cr.data(), ci.data(), iv.data(), N);
+    for(uint32_t i = 0; i < N; ++i) {
         EXPECT_EQ(is[i], iv[i]);
     }
 }
 
 TEST(bulb_test_pd, test) {
-    std::vector<double> cr(256);
-    std::vector<double> ci(256);
-    std::vector<uint64_t> is(256);
-    std::vector<uint64_t> iv(256);
+    const uint64_t N = 1024;
+    std::vector<double> cr(N);
+    std::vector<double> ci(N);
+    std::vector<uint64_t> is(N);
+    std::vector<uint64_t> iv(N);
     std::random_device dev;
     std::mt19937 rng(dev());
     std::uniform_real_distribution<double> dist(-2.0f, 2.0f);
@@ -91,7 +93,7 @@ TEST(bulb_test_pd, test) {
     for(double& f : cr) f = dist(rng);
     for(double& f : ci) f = dist(rng);
 
-    for(int i = 0; i < 256; ++i) {
+    for(uint64_t i = 0; i < N; ++i) {
         double xm = cr[i] - 0.25;
         double xp = cr[i] + 1.0;
         double y2 = ci[i]*ci[i];
@@ -99,8 +101,8 @@ TEST(bulb_test_pd, test) {
         if(q*(q+xm) < 0.25*y2 || xp*xp + y2 < 0.0625)
             is[i] = -1;
     }
-    bulb_test_pd(cr.data(), ci.data(), iv.data(), 256);
-    for(int i = 0; i < 256; ++i) {
+    bulb_test_pd(cr.data(), ci.data(), iv.data(), N);
+    for(uint64_t i = 0; i < N; ++i) {
         EXPECT_EQ(is[i], iv[i]);
     }
 }
