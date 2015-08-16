@@ -172,7 +172,7 @@ escape_test_pd:
     vmulpd ymm9, ymm2, ymm2
     vaddpd ymm7, ymm8, ymm9
     vcmplepd ymm7, ymm0
-    vpsubd ymm5, ymm7
+    vpsubq ymm5, ymm7
 
     loop .inner_loop
 
@@ -418,14 +418,13 @@ write_orbits_ps:
     vaddps ymm8, ymm11, ymm10
     vaddps ymm7, ymm12, ymm9
 
-    vcmpleps ymm11, ymm0, ymm7
-    vcmpgtps ymm12, ymm1, ymm7
-    vandps ymm11, ymm12
-    vcmpleps ymm12, ymm2, ymm8
-    vandps ymm11, ymm12
-    vcmpgtps ymm12, ymm3, ymm8
-    vandps ymm11, ymm12
-    vmovups [rsp-0x40], ymm11
+    vcmpgtps ymm11, ymm0, ymm7
+    vcmpleps ymm12, ymm1, ymm7
+    vorps ymm11, ymm12
+    vcmpgtps ymm12, ymm2, ymm8
+    vorps ymm11, ymm12
+    vcmpleps ymm12, ymm3, ymm8
+    vorps ymm11, ymm12
 
     vsubps ymm13, ymm7, ymm0
     vsubps ymm14, ymm8, ymm2
@@ -436,47 +435,40 @@ write_orbits_ps:
     vcvtps2dq ymm14, ymm14
     vpmulld ymm14, ymm6
     vpaddd  ymm14, ymm13
+    vorps   ymm14, ymm11
     vmovups [rsp-0x20], ymm14
 
-    mov r9d,  [rsp-0x40]
     mov r10d, [rsp-0x20]
-    test r9d, r9d
-    jz .S1
+    test r10d, r10d
+    jl .S1
     inc dword [r8+4*r10]
-.S1:mov r9d,  [rsp-0x3c]
-    mov r10d, [rsp-0x1c]
-    test r9d, r9d
-    jz .S2
+.S1:mov r10d, [rsp-0x1c]
+    test r10d, r10d
+    jl .S2
     inc dword [r8+4*r10]
-.S2:mov r9d,  [rsp-0x38]
-    mov r10d, [rsp-0x18]
-    test r9d, r9d
-    jz .S3
+.S2:mov r10d, [rsp-0x18]
+    test r10d, r10d
+    jl .S3
     inc dword [r8+4*r10]
-.S3:mov r9d,  [rsp-0x34]
-    mov r10d, [rsp-0x14]
-    test r9d, r9d
-    jz .S4
+.S3:mov r10d, [rsp-0x14]
+    test r10d, r10d
+    jl .S4
     inc dword [r8+4*r10]
-.S4:mov r9d,  [rsp-0x30]
-    mov r10d, [rsp-0x10]
-    test r9d, r9d
-    jz .S5
+.S4:mov r10d, [rsp-0x10]
+    test r10d, r10d
+    jl .S5
     inc dword [r8+4*r10]
-.S5:mov r9d,  [rsp-0x2c]
-    mov r10d, [rsp-0x0c]
-    test r9d, r9d
-    jz .S6
+.S5:mov r10d, [rsp-0x0c]
+    test r10d, r10d
+    jl .S6
     inc dword [r8+4*r10]
-.S6:mov r9d,  [rsp-0x28]
-    mov r10d, [rsp-0x08]
-    test r9d, r9d
-    jz .S7
+.S6:mov r10d, [rsp-0x08]
+    test r10d, r10d
+    jl .S7
     inc dword [r8+4*r10]
-.S7:mov r9d,  [rsp-0x24]
-    mov r10d, [rsp-0x04]
-    test r9d, r9d
-    jz .S8
+.S7:mov r10d, [rsp-0x04]
+    test r10d, r10d
+    jl .S8
     inc dword [r8+4*r10]
 .S8:
 
@@ -553,7 +545,7 @@ write_orbits_pd:
     or dword [rsp+4], 3 << 13
     vldmxcsr [rsp+4]
 
-    mov r10d, [rsp+16]
+    mov r10, [rsp+16]
 
     ; calculate scaling for C -> image
     vbroadcastsd ymm0, xmm0
@@ -563,17 +555,17 @@ write_orbits_pd:
 
     vsubpd ymm4, ymm1, ymm0
     vsubpd ymm5, ymm3, ymm2
-    vcvtsi2sd xmm6, r9d
-    vcvtsi2sd xmm7, r10d
+    vcvtsi2sd xmm6, r9
+    vcvtsi2sd xmm7, r10
     vbroadcastsd ymm6, xmm6
     vbroadcastsd ymm7, xmm7
     vdivpd ymm4, ymm6, ymm4
     vdivpd ymm5, ymm7, ymm5
 
-    vmovd xmm6, r9d
-    vpbroadcastd ymm6, xmm6
+    vmovq xmm6, r9
+    vpbroadcastq ymm6, xmm6
 
-    shl rdx, 1
+    shl rdx, 3
     xor rax, rax
 
 .outer_loop:
@@ -592,14 +584,13 @@ write_orbits_pd:
     vaddpd ymm8, ymm11, ymm10
     vaddpd ymm7, ymm12, ymm9
 
-    vcmplepd ymm11, ymm0, ymm7
-    vcmpgtpd ymm12, ymm1, ymm7
-    vandps ymm11, ymm12
-    vcmplepd ymm12, ymm2, ymm8
-    vandps ymm11, ymm12
-    vcmpgtpd ymm12, ymm3, ymm8
-    vandps ymm11, ymm12
-    vmovups [rsp-0x40], ymm11
+    vcmpgtpd ymm11, ymm0, ymm7
+    vcmplepd ymm12, ymm1, ymm7
+    vorps ymm11, ymm12
+    vcmpgtpd ymm12, ymm2, ymm8
+    vorps ymm11, ymm12
+    vcmplepd ymm12, ymm3, ymm8
+    vorps ymm11, ymm12
 
     vsubpd ymm13, ymm7, ymm0
     vsubpd ymm14, ymm8, ymm2
@@ -612,28 +603,25 @@ write_orbits_pd:
 
     vpmuldq ymm14, ymm6
     vpaddq  ymm14, ymm13
+    vorps   ymm14, ymm11
     vmovups [rsp-0x20], ymm14
 
-    mov r9,  [rsp-0x40]
     mov r10, [rsp-0x20]
-    test r9, r9
-    jz .S1
-    inc qword [r8+r10]
-.S1:mov r9,  [rsp-0x38]
-    mov r10, [rsp-0x18]
-    test r9, r9
-    jz .S2
-    inc qword [r8+r10]
-.S2:mov r9d,  [rsp-0x30]
-    mov r10d, [rsp-0x10]
-    test r9d, r9d
-    jz .S3
-    inc qword [r8+r10]
-.S3:mov r9d,  [rsp-0x28]
-    mov r10d, [rsp-0x08]
-    test r9d, r9d
-    jz .S4
-    inc qword [r8+r10]
+    test r10, r10
+    jl .S1
+    inc qword [r8+8*r10]
+.S1:mov r10, [rsp-0x18]
+    test r10, r10
+    jl .S2
+    inc qword [r8+8*r10]
+.S2:mov r10, [rsp-0x10]
+    test r10, r10
+    jl .S3
+    inc qword [r8+8*r10]
+.S3:mov r10, [rsp-0x08]
+    test r10, r10
+    jl .S4
+    inc qword [r8+8*r10]
 .S4:
 
     inc r11
