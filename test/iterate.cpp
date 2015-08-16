@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <vector>
+#include <random>
 
 #include <gtest/gtest.h>
 #include <brot/iterate.h>
@@ -50,4 +51,56 @@ TEST(escape_test_ps, iteration_count)
     EXPECT_EQ(i[5], 100u);
     EXPECT_EQ(i[6],  32u);
     EXPECT_EQ(i[7],  17u);
+}
+
+TEST(bulb_test_ps, test) {
+    std::vector<float> cr(256);
+    std::vector<float> ci(256);
+    std::vector<uint32_t> is(256);
+    std::vector<uint32_t> iv(256);
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::uniform_real_distribution<float> dist(-2.0f, 2.0f);
+
+    for(float& f : cr) f = dist(rng);
+    for(float& f : ci) f = dist(rng);
+
+    for(int i = 0; i < 256; ++i) {
+        float xm = cr[i] - 0.25f;
+        float xp = cr[i] + 1.0f;
+        float y2 = ci[i]*ci[i];
+        float q = xm*xm + y2;
+        if(q*(q+xm) < 0.25f*y2 || xp*xp + y2 < 0.0625f)
+            is[i] = -1;
+    }
+    bulb_test_ps(cr.data(), ci.data(), iv.data(), 256);
+    for(int i = 0; i < 256; ++i) {
+        EXPECT_EQ(is[i], iv[i]);
+    }
+}
+
+TEST(bulb_test_pd, test) {
+    std::vector<double> cr(256);
+    std::vector<double> ci(256);
+    std::vector<uint64_t> is(256);
+    std::vector<uint64_t> iv(256);
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::uniform_real_distribution<double> dist(-2.0f, 2.0f);
+
+    for(double& f : cr) f = dist(rng);
+    for(double& f : ci) f = dist(rng);
+
+    for(int i = 0; i < 256; ++i) {
+        double xm = cr[i] - 0.25;
+        double xp = cr[i] + 1.0;
+        double y2 = ci[i]*ci[i];
+        double q = xm*xm + y2;
+        if(q*(q+xm) < 0.25*y2 || xp*xp + y2 < 0.0625)
+            is[i] = -1;
+    }
+    bulb_test_pd(cr.data(), ci.data(), iv.data(), 256);
+    for(int i = 0; i < 256; ++i) {
+        EXPECT_EQ(is[i], iv[i]);
+    }
 }
