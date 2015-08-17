@@ -22,22 +22,22 @@ escape_test_ps:
     xor rax, rax
 
     ; cr is nullptr
-    sub rax, 1
+    dec rax
     test rdi, rdi
     jz .exit
 
     ; ci is nullptr
-    sub rax, 1
+    dec rax
     test rsi, rsi
     jz .exit
 
     ; ic is nullptr
-    sub rax, 1
+    dec rax
     test rdx, rdx
     jz .exit
 
     ; size is not 0 mod 8
-    sub rax, 1
+    dec rax
     test rcx, 0x07
     jnz .exit
 
@@ -113,22 +113,22 @@ escape_test_pd:
     xor rax, rax
 
     ; cr is nullptr
-    sub rax, 1
+    dec rax
     test rdi, rdi
     jz .exit
 
     ; ci is nullptr
-    sub rax, 1
+    dec rax
     test rsi, rsi
     jz .exit
 
     ; ic is nullptr
-    sub rax, 1
+    dec rax
     test rdx, rdx
     jz .exit
 
     ; size is not 0 mod 4
-    sub rax, 1
+    dec rax
     test rcx, 0x03
     jnz .exit
 
@@ -199,22 +199,22 @@ bulb_test_ps:
     xor rax, rax
 
     ; cr is nullptr
-    sub rax, 1
+    dec rax
     test rdi, rdi
     jz .exit
 
     ; ci is nullptr
-    sub rax, 1
+    dec rax
     test rsi, rsi
     jz .exit
 
     ; im is nullptr
-    sub rax, 1
+    dec rax
     test rdx, rdx
     jz .exit
 
     ; size is not 0 mod 8
-    sub rax, 1
+    dec rax
     test rcx, 0x07
     jnz .exit
 
@@ -268,22 +268,22 @@ bulb_test_pd:
     xor rax, rax
 
     ; cr is nullptr
-    sub rax, 1
+    dec rax
     test rdi, rdi
     jz .exit
 
     ; ci is nullptr
-    sub rax, 1
+    dec rax
     test rsi, rsi
     jz .exit
 
     ; im is nullptr
-    sub rax, 1
+    dec rax
     test rdx, rdx
     jz .exit
 
     ; size is not 0 mod 8
-    sub rax, 1
+    dec rax
     test rcx, 0x03
     jnz .exit
 
