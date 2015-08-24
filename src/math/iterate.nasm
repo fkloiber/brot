@@ -497,7 +497,7 @@ write_orbits_ps:
 write_orbits_pd:
     ; int64_t write_orbits_pd(const double* cr, const double* ci, uint64_t size,
     ;     uint64_t maxiter, double min_r, double max_r, double min_i, double max_i,
-    ;     uint64_t* img, uint64_t width, uint64_t height);
+    ;     uint32_t* img, uint64_t width, uint64_t height);
     ; For each 0 <= n < size, iterate at most maxiter times over the
     ; complex polynomial z_n+1 = z_n^2 + c
     ; with z_0 = 0 and c = cr[n] + i*ci[n].
@@ -612,19 +612,19 @@ write_orbits_pd:
     mov r10, [rsp-0x20]
     test r10, r10
     jl .S1
-    inc qword [r8+8*r10]
+    inc dword [r8+4*r10]
 .S1:mov r10, [rsp-0x18]
     test r10, r10
     jl .S2
-    inc qword [r8+8*r10]
+    inc dword [r8+4*r10]
 .S2:mov r10, [rsp-0x10]
     test r10, r10
     jl .S3
-    inc qword [r8+8*r10]
+    inc dword [r8+4*r10]
 .S3:mov r10, [rsp-0x08]
     test r10, r10
     jl .S4
-    inc qword [r8+8*r10]
+    inc dword [r8+4*r10]
 .S4:
 
     vxorps ymm11, ymm15
