@@ -495,7 +495,7 @@ write_orbits_ps:
 
     align 16
 write_orbits_pd:
-    ; int write_orbits_pd(const double* cr, const double* ci, uint64_t size,
+    ; int64_t write_orbits_pd(const double* cr, const double* ci, uint64_t size,
     ;     uint64_t maxiter, double min_r, double max_r, double min_i, double max_i,
     ;     uint64_t* img, uint64_t width, uint64_t height);
     ; For each 0 <= n < size, iterate at most maxiter times over the
@@ -565,6 +565,9 @@ write_orbits_pd:
     vmovq xmm6, r9
     vpbroadcastq ymm6, xmm6
 
+    vmovaps ymm15, [not_mask]
+    vxorps ymm14, ymm14
+
     shl rdx, 3
     xor rax, rax
 
@@ -592,19 +595,19 @@ write_orbits_pd:
     vcmplepd ymm12, ymm3, ymm8
     vorps ymm11, ymm12
 
-    vsubpd ymm13, ymm7, ymm0
-    vsubpd ymm14, ymm8, ymm2
-    vmulpd ymm13, ymm4
-    vmulpd ymm14, ymm5
+    vsubpd ymm12, ymm7, ymm0
+    vsubpd ymm13, ymm8, ymm2
+    vmulpd ymm12, ymm4
+    vmulpd ymm13, ymm5
+    vcvtpd2dq xmm12, ymm12
     vcvtpd2dq xmm13, ymm13
-    vcvtpd2dq xmm14, ymm14
+    vpmovsxdq ymm12, xmm12
     vpmovsxdq ymm13, xmm13
-    vpmovsxdq ymm14, xmm14
 
-    vpmuldq ymm14, ymm6
-    vpaddq  ymm14, ymm13
-    vorps   ymm14, ymm11
-    vmovups [rsp-0x20], ymm14
+    vpmuldq ymm13, ymm6
+    vpaddq  ymm13, ymm12
+    vorps   ymm13, ymm11
+    vmovups [rsp-0x20], ymm13
 
     mov r10, [rsp-0x20]
     test r10, r10
@@ -624,6 +627,9 @@ write_orbits_pd:
     inc qword [r8+8*r10]
 .S4:
 
+    vxorps ymm11, ymm15
+    vpsubq ymm14, ymm11
+
     inc r11
     cmp r11, rcx
     jl .inner_loop
@@ -633,11 +639,16 @@ write_orbits_pd:
     jl .outer_loop
 
 .end:
+    vmovups [rsp-0x20], ymm14
+    xor rax, rax
+    add rax, [rsp-0x20]
+    add rax, [rsp-0x18]
+    add rax, [rsp-0x10]
+    add rax, [rsp-0x08]
     ; restore rounding mode
     vldmxcsr [rsp]
     add       rsp, 8
 
-    xor rax, rax
 .exit:
     ret
 
@@ -654,3 +665,5 @@ one_ps:       times 8 dd 1.0
 ovfour_pd:    times 4 dq 0.25
 ovsixteen_pd: times 4 dq 0.0625
 one_pd:       times 4 dq 1.0
+
+not_mask:     times 8 dd 0xffffffff
