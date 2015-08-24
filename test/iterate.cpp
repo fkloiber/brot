@@ -106,3 +106,44 @@ TEST(bulb_test_pd, test) {
         EXPECT_EQ(is[i], iv[i]);
     }
 }
+
+TEST(write_orbits_pd, error_codes) {
+    std::vector<double> cr(4);
+    std::vector<double> ci(4);
+    std::vector<uint32_t> img(100*100);
+
+    EXPECT_EQ(write_orbits_pd(nullptr, ci.data(), 4, 1000, -2.0, 2.0, -2.0, 2.0, img.data(), 100, 100), -1);
+    EXPECT_EQ(write_orbits_pd(cr.data(), nullptr, 4, 1000, -2.0, 2.0, -2.0, 2.0, img.data(), 100, 100), -2);
+    EXPECT_EQ(write_orbits_pd(cr.data(), ci.data(), 4, 1000, -2.0, 2.0, -2.0, 2.0, nullptr, 100, 100), -3);
+    EXPECT_EQ(write_orbits_pd(cr.data(), ci.data(), 3, 1000, -2.0, 2.0, -2.0, 2.0, img.data(), 100, 100), -4);
+    EXPECT_GE(write_orbits_pd(cr.data(), ci.data(), 4, 1000, -2.0, 2.0, -2.0, 2.0, img.data(), 100, 100), 0);
+}
+
+TEST(write_orbits_pd, return_value) {
+    constexpr size_t N=128;
+    constexpr size_t w=100, h=100;
+    constexpr size_t iter=1000;
+    std::vector<double> cr(N);
+    std::vector<double> ci(N);
+    std::vector<uint32_t> img(w*h);
+
+    int64_t ret = write_orbits_pd(cr.data(), ci.data(), N, iter, -2.0, 2.0, -2.0, 2.0, img.data(), w, h);
+    for(size_t i = 0; i < h/2; ++i) {
+    for(size_t j = 0; j < w; ++j) {
+        EXPECT_EQ(img[i*w+j], 0u);
+    }
+    }
+    for(size_t j = 0; j < w/2; ++j) {
+        EXPECT_EQ(img[w*h/2+j], 0u);
+    }
+    for(size_t j = w/2+1; j < w; ++j) {
+        EXPECT_EQ(img[w*h/2+j], 0u);
+    }
+    for(size_t i = h/2+1; i < h; ++i) {
+    for(size_t j = 0; j < w; ++j) {
+        EXPECT_EQ(img[i*w+j], 0u);
+    }
+    }
+    EXPECT_EQ(img[w*h/2+w/2], N*iter);
+    EXPECT_EQ(ret, N*iter);
+}
