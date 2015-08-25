@@ -23,7 +23,7 @@ include_directories(${gtest_SOURCE_DIR}/include)
 enable_testing()
 add_subdirectory(test)
 
-add_executable(brot src/brot.cpp src/math/rand.nasm src/math/iterate.nasm)
+add_executable(brot src/brot.cpp src/options.cpp src/math/rand.nasm src/math/iterate.nasm)
 target_link_libraries(brot ${MPI_LIBRARIES})
 
 if(MPI_COMPILE_FLAGS)
