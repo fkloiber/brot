@@ -61,6 +61,8 @@ escape_test_ps:
     vxorps  ymm9, ymm9
 
 
+    test r9, r9
+    jz .inner_loop_end
     mov rcx, r9
 
     ; calculates a single iteration of the complex polynomial
@@ -84,6 +86,7 @@ escape_test_ps:
     vpsubd ymm5, ymm7
 
     loop .inner_loop
+.inner_loop_end:
 
     vmovups [rdx+rax], ymm5
 
@@ -152,6 +155,8 @@ escape_test_pd:
     vxorps  ymm9, ymm9
 
 
+    test r9, r9
+    jz .inner_loop_end
     mov rcx, r9
 
     ; calculates a single iteration of the complex polynomial
@@ -175,6 +180,7 @@ escape_test_pd:
     vpsubq ymm5, ymm7
 
     loop .inner_loop
+.inner_loop_end:
 
     vmovups [rdx+rax], ymm5
 
