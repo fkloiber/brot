@@ -447,7 +447,7 @@ write_orbits_ps:
     mov r10d, [rsp-0x20]
     test r10d, r10d
     jl .S1
-    inc dword [r8+4*r10]
+    lock inc dword [r8+4*r10]
 .S1:mov r10d, [rsp-0x1c]
     test r10d, r10d
     jl .S2
@@ -455,27 +455,27 @@ write_orbits_ps:
 .S2:mov r10d, [rsp-0x18]
     test r10d, r10d
     jl .S3
-    inc dword [r8+4*r10]
+    lock inc dword [r8+4*r10]
 .S3:mov r10d, [rsp-0x14]
     test r10d, r10d
     jl .S4
-    inc dword [r8+4*r10]
+    lock inc dword [r8+4*r10]
 .S4:mov r10d, [rsp-0x10]
     test r10d, r10d
     jl .S5
-    inc dword [r8+4*r10]
+    lock inc dword [r8+4*r10]
 .S5:mov r10d, [rsp-0x0c]
     test r10d, r10d
     jl .S6
-    inc dword [r8+4*r10]
+    lock inc dword [r8+4*r10]
 .S6:mov r10d, [rsp-0x08]
     test r10d, r10d
     jl .S7
-    inc dword [r8+4*r10]
+    lock inc dword [r8+4*r10]
 .S7:mov r10d, [rsp-0x04]
     test r10d, r10d
     jl .S8
-    inc dword [r8+4*r10]
+    lock inc dword [r8+4*r10]
 .S8:
 
     inc r11
@@ -618,19 +618,19 @@ write_orbits_pd:
     mov r10, [rsp-0x20]
     test r10, r10
     jl .S1
-    inc dword [r8+4*r10]
+    lock inc dword [r8+4*r10]
 .S1:mov r10, [rsp-0x18]
     test r10, r10
     jl .S2
-    inc dword [r8+4*r10]
+    lock inc dword [r8+4*r10]
 .S2:mov r10, [rsp-0x10]
     test r10, r10
     jl .S3
-    inc dword [r8+4*r10]
+    lock inc dword [r8+4*r10]
 .S3:mov r10, [rsp-0x08]
     test r10, r10
     jl .S4
-    inc dword [r8+4*r10]
+    lock inc dword [r8+4*r10]
 .S4:
 
     vxorps ymm11, ymm15
