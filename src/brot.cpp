@@ -6,6 +6,7 @@
 
 #include <mpi.h>
 #include <omp.h>
+#include <zlib.h>
 
 #include <brot/options.h>
 #include <brot/rand.h>
@@ -64,12 +65,24 @@ int main(int argc, char **argv)
     }
 
     if(world_rank == 0) {
-        FILE *f = fopen(options.filename, "wb");
-        if(!f) {
-            fprintf(stderr, "Error: Couldn't open file \"%s\" for writing\n", options.filename);
+        if(options.compress) {
+            gzFile f = gzopen(options.filename.c_str(), "wb9");
+            if(!f) {
+                fprintf(stderr, "Error: Coulnd't open file \"%s\" for compressed writing\n", options.filename.c_str());
+            } else {
+                printf("Writing compressed output...\n");
+                gzwrite(f, img.data(), image_size*sizeof(uint32_t));
+                gzclose_w(f);
+            }
         } else {
-            fwrite(img.data(), sizeof(uint32_t), image_size, f);
-            fclose(f);
+            FILE *f = fopen(options.filename.c_str(), "wb");
+            if(!f) {
+                fprintf(stderr, "Error: Couldn't open file \"%s\" for writing\n", options.filename.c_str());
+            } else {
+                printf("Writing output...\n");
+                fwrite(img.data(), sizeof(uint32_t), image_size, f);
+                fclose(f);
+            }
         }
     }
 

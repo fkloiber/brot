@@ -2,6 +2,7 @@
 #define BROT_OPTIONS_HEADER
 
 #include <cstdio>
+#include <string>
 
 struct options_t
 {
@@ -17,8 +18,9 @@ struct options_t
     double rand_rlow=-2.0, rand_rhigh=2.0;
     double rand_ilow=-2.0, rand_ihigh=2.0;
     size_t iter_low=0, iter_high=10;
-    const char* filename;
-    double use_max=false, use_err=false;
+    std::string filename;
+    bool use_max=false, use_err=false;
+    bool compress=false;
 };
 
 bool parse_options(options_t& opt, bool print, int argc, char **argv);

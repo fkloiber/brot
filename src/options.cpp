@@ -273,6 +273,8 @@ bool parse_options(options_t& opt, bool print, int argc, char **argv)
         fclose(f);
     }
     opt.filename=argv[optind];
+    if(opt.filename.size() > 3 && opt.filename.rfind(".gz") == opt.filename.size() - 3)
+        opt.compress = true;
 
     if(!opt.use_max && !opt.use_err) {
         fprintf(stderr, "Error: Either --max-blocks or --error must be specified\n");
