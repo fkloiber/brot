@@ -75,6 +75,37 @@ int seed_xorshift1024_urandom(xorshift1024_t* r) {
 
 #ifdef __cplusplus
 }
+
+inline int fill_canonical128(float* b, size_t s, xorshift128_t* r)
+{
+    return fill_canonical128_ps(b,s,r);
+}
+
+inline int fill_canonical128(double* b, size_t s, xorshift128_t* r)
+{
+    return fill_canonical128_pd(b,s,r);
+}
+
+inline int fill_canonical1024(float* b, size_t s, xorshift1024_t* r)
+{
+    return fill_canonical1024_ps(b,s,r);
+}
+
+inline int fill_canonical1024(double* b, size_t s, xorshift1024_t* r)
+{
+    return fill_canonical1024_pd(b,s,r);
+}
+
+inline int fill_uniform1024(float* b, size_t s, float l, float h, xorshift1024_t* r)
+{
+    return fill_uniform1024_ps(b,s,l,h,r);
+}
+
+inline int fill_uniform1024(double* b, size_t s, double l, double h, xorshift1024_t* r)
+{
+    return fill_uniform1024_pd(b,s,l,h,r);
+}
+
 #endif
 
 #endif//SIMD_RAND_HEADER
