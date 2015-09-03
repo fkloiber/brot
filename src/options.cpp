@@ -12,7 +12,7 @@ void print_usage(FILE *f)
         "  -z, --run-size    number of points a node processes at once. Must be a multiple of 8 (single) or 4 (double).\n"
         "  -b, --block-size  number of runs in a block\n"
         "  -m, --max-blocks  maximum number of blocks in calculation\n"
-        "  -e, --error       error threshold (not yet implemented)\n"
+        "  -e, --error       error threshold\n"
         "  -d, --radius      escape radius\n"
         "  -W, --width       pixel width of the output image\n"
         "  -H, --height      pixel height of the output image\n"
@@ -158,8 +158,6 @@ bool parse_options(options_t& opt, bool print, int argc, char **argv)
             break;
 
             case 'e':
-                fprintf(stderr, "Error condition not yet implemented\n");
-                return false;
                 if(!double_optarg(opt.error, print))
                     return false;
                 opt.use_err = true;
@@ -263,6 +261,18 @@ bool parse_options(options_t& opt, bool print, int argc, char **argv)
         }
         return false;
     }
+
+    if(!opt.use_max && !opt.use_err) {
+        if(print) {
+            fprintf(stderr, "Error: Either --max-blocks or --error must be specified\n");
+            print_usage(stderr);
+        }
+        return false;
+    }
+
+    if(!opt.use_max)
+        opt.max_blocks = std::numeric_limits<size_t>::max();
+
     if(print) {
         FILE *f = fopen(argv[optind], "a");
         if(!f) {
@@ -275,12 +285,6 @@ bool parse_options(options_t& opt, bool print, int argc, char **argv)
     opt.filename=argv[optind];
     if(opt.filename.size() > 3 && opt.filename.rfind(".gz") == opt.filename.size() - 3)
         opt.compress = true;
-
-    if(!opt.use_max && !opt.use_err) {
-        fprintf(stderr, "Error: Either --max-blocks or --error must be specified\n");
-        print_usage(stderr);
-        return false;
-    }
 
     return true;
 }

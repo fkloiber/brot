@@ -1,7 +1,9 @@
 #include <cstdio>
 #include <cinttypes>
+#include <cstring>
 #include <algorithm>
 #include <type_traits>
+#include <limits>
 #include <vector>
 
 #include <mpi.h>
@@ -16,7 +18,7 @@ template<class Floating, class Integer>
 void iterate(const options_t& options, std::vector<uint32_t>& img);
 
 void split_time(double time, int& hours, int& minutes, int& seconds, int& hund);
-void print_info(double elapsed, uint64_t blocks, uint64_t maxblocks, uint64_t orbits, uint64_t points);
+void print_info(const options_t& opt, double elapsed, uint64_t blocks, uint64_t orbits, uint64_t points, double error);
 
 int main(int argc, char **argv)
 {
@@ -104,8 +106,10 @@ inline size_t reduce_align(size_t s)
 template<class Floating, class Integer>
 void iterate(const options_t& options, std::vector<uint32_t>& img)
 {
-    int mpi_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    int world_rank;
+    int world_size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
     const int threads = omp_get_max_threads();
     const size_t image_size = options.width * options.height;
@@ -118,7 +122,10 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
     const Floating rH = options.rand_rhigh;
     const Floating iL = options.rand_ilow;
     const Floating iH = options.rand_ihigh;
-    img.resize(image_size);
+
+    if(world_rank == 0)
+        img.resize(image_size);
+    std::vector<uint32_t> tmp(image_size);
 
     std::vector<Floating> points(4*threads*rs);
     std::vector<Integer>  escape(  threads*rs);
@@ -129,13 +136,10 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
 
     uint64_t orbits_written=0, points_written=0, blocks_written=0;
     double start_time = MPI_Wtime();
-    if(mpi_rank == 0)
-        print_info(0.0, 0, options.max_blocks, 0, 0);
+    if(world_rank == 0)
+        print_info(options, 0.0, 0, 0, 0, std::numeric_limits<double>::infinity());
 
     for(blocks_written=0; blocks_written < options.max_blocks; ++blocks_written) {
-        if(mpi_rank != 0)
-            memset(img.data(), 0, sizeof(uint32_t)*image_size);
-
         //#pragma omp parallel for
         for(size_t i = 0; i < options.block_size; ++i) {
             int thread_num = omp_get_thread_num();
@@ -193,25 +197,44 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
             }
 
             size_t t = write_orbits(tr, ti, high_block, options.iter_high,
-                rl, rh, il, ih, img.data(), options.width, options.height);
+                rl, rh, il, ih, tmp.data(), options.width, options.height);
 
-            #pragma omp atomic
+            //#pragma omp atomic
             points_written += t;
-            #pragma omp atomic
+            //#pragma omp atomic
             orbits_written += high_block;
         }
-        if(mpi_rank == 0) {
-            MPI_Reduce(MPI_IN_PLACE, img.data(),      image_size, MPI_UINT32_T, MPI_SUM, 0, MPI_COMM_WORLD);
+
+        if(world_rank == 0) {
+            MPI_Reduce(MPI_IN_PLACE, tmp.data(),      image_size, MPI_UINT32_T, MPI_SUM, 0, MPI_COMM_WORLD);
             MPI_Reduce(MPI_IN_PLACE, &points_written, 1,          MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
             MPI_Reduce(MPI_IN_PLACE, &orbits_written, 1,          MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
 
+            double sum = 0;
+            #pragma omp parallel for reduction(+:sum)
+            for(size_t i = 0; i < image_size; ++i) {
+                sum += std::abs(double(tmp[i] - img[i]))/(tmp[i]);
+            }
+            std::memcpy(img.data(), tmp.data(), image_size*sizeof(uint32_t));
+            double error = (double)sum/image_size;
+
+            if(options.use_err)
+                MPI_Bcast(&error, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
             double current_time = MPI_Wtime();
-            print_info(current_time-start_time, blocks_written+1, options.max_blocks,
-                orbits_written, points_written);
+            print_info(options, current_time-start_time, blocks_written+1,
+                orbits_written, points_written, error);
+            if(options.use_err && error < options.error)
+                break;
         } else {
-            MPI_Reduce(img.data(),      img.data(),      image_size, MPI_UINT32_T, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce(tmp.data(),      tmp.data(),      image_size, MPI_UINT32_T, MPI_SUM, 0, MPI_COMM_WORLD);
             MPI_Reduce(&points_written, &points_written, 1,          MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
             MPI_Reduce(&orbits_written, &orbits_written, 1,          MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
+            double error;
+            if(options.use_err)
+                MPI_Bcast(&error, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+            if(options.use_err && error < options.error)
+                break;
         }
     }
 }
@@ -227,25 +250,42 @@ void split_time(double time, int& hours, int& minutes, int& seconds, int& hund)
     minutes = minutes %  60;
 }
 
-void print_info(double elapsed, uint64_t blocks, uint64_t maxblocks, uint64_t orbits, uint64_t points)
+void print_info(const options_t& opt, double elapsed, uint64_t blocks, uint64_t orbits, uint64_t points, double error)
 {
     int eh, em, es, ed, rh, rm, rs, rd;
-    double progress = (double)blocks/maxblocks;
-    double remaining = 0.0;
-    if(blocks != 0) {
-        remaining = (1.0-progress)/progress * elapsed;
+    bool valid_eta = false;
+    double remaining = std::numeric_limits<double>::infinity();
+
+    if(opt.use_max && blocks != 0) {
+        valid_eta = true;
+        double progress = (double)blocks / opt.max_blocks;
+        remaining = (1.0 - progress) / progress * elapsed;
+    }
+
+    if(opt.use_err && blocks >= 2 && error != 0.0 && !std::isnan(error)) {
+        valid_eta = true;
+        double d = std::log(error)/std::log(blocks);
+        size_t max_block = std::pow(opt.error, 1.0/d);
+        double progress = (double)blocks / max_block;
+        remaining = std::min(remaining, (1.0 - progress) / progress * elapsed);
     }
 
     split_time(elapsed, eh, em, es, ed);
     split_time(remaining, rh, rm, rs, rd);
 
     printf("runtime: %02d:%02d:%02d.%02d, ", eh, em, es, ed);
-    if(blocks == 0)
+    if(!valid_eta || remaining < 0.0)
         printf("ETA: N/A, ");
     else
         printf("ETA: %02d:%02d:%02d.%02d, ", rh, rm, rs, rd);
 
-    printf("macro blocks: %lu/%lu, orbits: %lu, points: %lu\n", blocks, maxblocks, orbits, points);
+    if(opt.use_max) {
+        printf("blocks: %lu/%lu, orbits: %lu, points: %lu, error: %f\n",
+            blocks, opt.max_blocks, orbits, points, error);
+    } else {
+        printf("blocks: %lu, orbits: %lu, points: %lu, error: %f\n",
+            blocks, orbits, points, error);
+    }
 
     fflush(stdout);
 }
