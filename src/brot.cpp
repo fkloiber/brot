@@ -48,8 +48,10 @@ int main(int argc, char **argv)
         printf("An orbit will be included in the image if it escapes the "
                "circle of raduis %f between %"PRIu64" and %"PRIu64" iterations\n",
                options.radius, options.iter_low, options.iter_high);
+        printf("Random points are drawn from [%f,%f]+i[%f,%f]\n",
+               options.rand_rlow, options.rand_rhigh, options.rand_ilow, options.rand_ihigh);
         printf("The image is mapped from the region [%f,%f]+i[%f,%f]\n",
-               options.real_low, options.real_high, options.imag_low, options.imag_high);
+               options.map_rlow, options.map_rhigh, options.map_ilow, options.map_ihigh);
     }
 
     const size_t image_size = options.width*options.height;
@@ -95,10 +97,14 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
     const int threads = omp_get_max_threads();
     const size_t image_size = options.width * options.height;
     const size_t rs = options.run_size;
-    const Floating rl = options.real_low;
-    const Floating rh = options.real_high;
-    const Floating il = options.imag_low;
-    const Floating ih = options.imag_high;
+    const Floating rl = options.map_rlow;
+    const Floating rh = options.map_rhigh;
+    const Floating il = options.map_ilow;
+    const Floating ih = options.map_ihigh;
+    const Floating rL = options.rand_rlow;
+    const Floating rH = options.rand_rhigh;
+    const Floating iL = options.rand_ilow;
+    const Floating iH = options.rand_ihigh;
     img.resize(image_size);
 
     std::vector<Floating> points(4*threads*rs);
@@ -127,8 +133,8 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
             Integer  *im = escape.data() + rs* thread_num;
             size_t   *ix = idx.data()    + rs* thread_num;
 
-            fill_uniform1024(cr, rs, rl, rh, &rngs[thread_num]);
-            fill_uniform1024(ci, rs, il, ih, &rngs[thread_num]);
+            fill_uniform1024(cr, rs, rL, rH, &rngs[thread_num]);
+            fill_uniform1024(ci, rs, iL, iH, &rngs[thread_num]);
 
             std::iota(ix, ix+rs, 0);
             bulb_test(cr, ci, im, rs);
@@ -160,25 +166,10 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
 
             std::iota(ix, ix+low_block, 0);
             escape_test(cr, ci, im, low_block, options.iter_high+1, options.radius);
-            /*
-            size_t *insert = ix;
-            for(size_t *iter = ix; iter != ix+low_block; ++iter) {
-                if(im[*iter] <= options.iter_high) {
-                    *insert = *iter;
-                    ++insert;
-                }
-            }//*/
-            /*
-            std::sort(ix, ix+low_block, [im](size_t a, size_t b) {
-                return im[a] < im[b];
-            });
-            const size_t* high = std::lower_bound(ix, ix+low_block, options.iter_high+1, [im](size_t a, size_t b) {
-                return im[a] < im[b];
-            });//*/
-            //*
+
             size_t* high = std::partition(ix, ix+low_block, [im, &options](size_t a) {
                 return im[a] <= options.iter_high;
-            });//*/
+            });
 
             const size_t high_size = high - ix;
             const size_t high_block = reduce_align<Floating>(high_size);
@@ -189,9 +180,7 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
             }
 
             size_t t = write_orbits(tr, ti, high_block, options.iter_high,
-                options.real_low, options.real_high,
-                options.imag_low, options.imag_high,
-                img.data(), options.width, options.height);
+                rl, rh, il, ih, img.data(), options.width, options.height);
 
             #pragma omp atomic
             points_written += t;

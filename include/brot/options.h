@@ -12,8 +12,10 @@ struct options_t
     double error;
     double radius=2.0;
     size_t width=100, height=100;
-    double real_low=-2.0, real_high=2.0;
-    double imag_low=-2.0, imag_high=2.0;
+    double map_rlow=-2.0, map_rhigh=2.0;
+    double map_ilow=-2.0, map_ihigh=2.0;
+    double rand_rlow=-2.0, rand_rhigh=2.0;
+    double rand_ilow=-2.0, rand_ihigh=2.0;
     size_t iter_low=0, iter_high=10;
     const char* filename;
     double use_max=false, use_err=false;

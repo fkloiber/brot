@@ -7,42 +7,50 @@
 void print_usage(FILE *f)
 {
     fprintf(f, "Usage: brot [options] <filename>\n\n"
-        "  -h, --help       print this page and exit\n"
-        "  -p, --precision  'single' or 'double' precision [double]\n"
-        "  -z, --run-size   number of points a node processes at once. Must be a multiple of 8 (single) or 4 (double).\n"
-        "  -b, --block-size number of runs in a block\n"
-        "  -m, --max-blocks maximum number of blocks in calculation\n"
-        "  -e, --error      error threshold\n"
-        "  -d, --radius     escape radius\n"
-        "  -W, --width      pixel width of the output image\n"
-        "  -H, --height     pixel height of the output image\n"
-        "  -r, --real-low   lower cutoff on real axis\n"
-        "  -s, --real-high  higher cutoff on real axis\n"
-        "  -i, --imag-low   lower cutoff on imaginary axis\n"
-        "  -j, --imag-high  higher cutoff on imaginary axis\n"
-        "  -k, --iter-low   only plot orbits of length >= iter-low\n"
-        "  -l, --iter-high  only plot orbits of length <= iter-high\n"
-        "  <filename>       file to write image to\n");
+        "  -h, --help        print this page and exit\n"
+        "  -p, --precision   'single' or 'double' precision [double]\n"
+        "  -z, --run-size    number of points a node processes at once. Must be a multiple of 8 (single) or 4 (double).\n"
+        "  -b, --block-size  number of runs in a block\n"
+        "  -m, --max-blocks  maximum number of blocks in calculation\n"
+        "  -e, --error       error threshold (not yet implemented)\n"
+        "  -d, --radius      escape radius\n"
+        "  -W, --width       pixel width of the output image\n"
+        "  -H, --height      pixel height of the output image\n"
+        "  -R, --rand-r-low  lower real cutoff for random region\n"
+        "  -S, --rand-r-high higher real cutoff for random region\n"
+        "  -I, --rand-i-low  lower imaginary cutoff for random region\n"
+        "  -J, --rand-i-high higher imaginary cutoff for random region\n"
+        "  -r, --map-r-low   lower cutoff on real axis\n"
+        "  -s, --map-r-high  higher cutoff on real axis\n"
+        "  -i, --map-i-low   lower cutoff on imaginary axis\n"
+        "  -j, --map-i-high  higher cutoff on imaginary axis\n"
+        "  -k, --iter-low    only plot orbits of length >= iter-low\n"
+        "  -l, --iter-high   only plot orbits of length <= iter-high\n"
+        "  <filename>        file to write image to\n");
 }
 
 const struct option options[] =
 {
-    {"help",      no_argument,       nullptr, 'h'},
-    {"precision", required_argument, nullptr, 'p'},
-    {"run-size",  required_argument, nullptr, 'z'},
-    {"block-size",required_argument, nullptr, 'b'},
-    {"max-blocks",required_argument, nullptr, 'm'},
-    {"error",     required_argument, nullptr, 'e'},
-    {"radius",    required_argument, nullptr, 'd'},
-    {"width",     required_argument, nullptr, 'W'},
-    {"height",    required_argument, nullptr, 'H'},
-    {"real-low",  required_argument, nullptr, 'r'},
-    {"real-high", required_argument, nullptr, 's'},
-    {"imag-low",  required_argument, nullptr, 'i'},
-    {"imag-high", required_argument, nullptr, 'j'},
-    {"iter-low",  required_argument, nullptr, 'k'},
-    {"iter-high", required_argument, nullptr, 'l'},
-    {nullptr,     0,                 nullptr,  0 }
+    {"help",       no_argument,       nullptr, 'h'},
+    {"precision",  required_argument, nullptr, 'p'},
+    {"run-size",   required_argument, nullptr, 'z'},
+    {"block-size", required_argument, nullptr, 'b'},
+    {"max-blocks", required_argument, nullptr, 'm'},
+    {"error",      required_argument, nullptr, 'e'},
+    {"radius",     required_argument, nullptr, 'd'},
+    {"width",      required_argument, nullptr, 'W'},
+    {"height",     required_argument, nullptr, 'H'},
+    {"rand-r-low", required_argument, nullptr, 'R'},
+    {"rand-r-high",required_argument, nullptr, 'S'},
+    {"rand-i-low", required_argument, nullptr, 'I'},
+    {"rand-i-high",required_argument, nullptr, 'J'},
+    {"map-r-low",  required_argument, nullptr, 'r'},
+    {"map-r-high", required_argument, nullptr, 's'},
+    {"map-i-low",  required_argument, nullptr, 'i'},
+    {"map-i-high", required_argument, nullptr, 'j'},
+    {"iter-low",   required_argument, nullptr, 'k'},
+    {"iter-high",  required_argument, nullptr, 'l'},
+    {nullptr,      0,                 nullptr,  0 }
 };
 
 bool size_t_optarg(size_t& val, bool print)
@@ -110,7 +118,7 @@ bool parse_options(options_t& opt, bool print, int argc, char **argv)
     static const std::string sgl="single";
     std::string prec;
     opterr = 0;
-    while((option = getopt_long(argc, argv, ":hp:z:b:m:e:d:W:H:r:s:i:j:k:l:", options, &option_index)) != -1) {
+    while((option = getopt_long(argc, argv, ":hp:z:b:m:e:d:W:H:R:S:I:J:r:s:i:j:k:l:", options, &option_index)) != -1) {
         switch(option) {
             case 'h':
                 if(print)
@@ -172,23 +180,43 @@ bool parse_options(options_t& opt, bool print, int argc, char **argv)
                     return false;
             break;
 
+            case 'R':
+                if(!double_optarg(opt.rand_rlow, print))
+                    return false;
+            break;
+
+            case 'S':
+                if(!double_optarg(opt.rand_rhigh, print))
+                    return false;
+            break;
+
+            case 'I':
+                if(!double_optarg(opt.rand_ilow, print))
+                    return false;
+            break;
+
+            case 'J':
+                if(!double_optarg(opt.rand_ihigh, print))
+                    return false;
+            break;
+
             case 'r':
-                if(!double_optarg(opt.real_low, print))
+                if(!double_optarg(opt.map_rlow, print))
                     return false;
             break;
 
             case 's':
-                if(!double_optarg(opt.real_high, print))
+                if(!double_optarg(opt.map_rhigh, print))
                     return false;
             break;
 
             case 'i':
-                if(!double_optarg(opt.imag_low, print))
+                if(!double_optarg(opt.map_ilow, print))
                     return false;
             break;
 
             case 'j':
-                if(!double_optarg(opt.imag_high, print))
+                if(!double_optarg(opt.map_ihigh, print))
                     return false;
             break;
 
