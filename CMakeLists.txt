@@ -5,7 +5,7 @@ enable_language(ASM_NASM)
 find_package(OpenMP REQUIRED)
 find_package(MPI REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -Wall -Wextra -march=native -std=gnu++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -Wall -Wextra -Wno-literal-suffix -march=native -std=gnu++11")
 set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} -felf64")
 
 set(CMAKE_ASM_NASM_FLAGS_DEBUG "${CMAKE_ASM_NSAM_FLAGS_DEBUG} -g -F dwarf -O0")
