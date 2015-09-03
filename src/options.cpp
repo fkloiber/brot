@@ -9,10 +9,11 @@ void print_usage(FILE *f)
     fprintf(f, "Usage: brot [options] <filename>\n\n"
         "  -h, --help       print this page and exit\n"
         "  -p, --precision  'single' or 'double' precision [double]\n"
-        "  -z, --block-size number of points a node processes at once\n"
-        "  -d, --radius     escape radius\n"
-        "  -m, --max-blocks maximum number of blocks per node\n"
+        "  -z, --run-size   number of points a node processes at once. Must be a multiple of 8 (single) or 4 (double).\n"
+        "  -b, --block-size number of runs in a block\n"
+        "  -m, --max-blocks maximum number of blocks in calculation\n"
         "  -e, --error      error threshold\n"
+        "  -d, --radius     escape radius\n"
         "  -W, --width      pixel width of the output image\n"
         "  -H, --height     pixel height of the output image\n"
         "  -r, --real-low   lower cutoff on real axis\n"
@@ -28,16 +29,19 @@ const struct option options[] =
 {
     {"help",      no_argument,       nullptr, 'h'},
     {"precision", required_argument, nullptr, 'p'},
+    {"run-size",  required_argument, nullptr, 'z'},
+    {"block-size",required_argument, nullptr, 'b'},
+    {"max-blocks",required_argument, nullptr, 'm'},
+    {"error",     required_argument, nullptr, 'e'},
+    {"radius",    required_argument, nullptr, 'd'},
     {"width",     required_argument, nullptr, 'W'},
     {"height",    required_argument, nullptr, 'H'},
-    {"radius",    required_argument, nullptr, 'd'},
     {"real-low",  required_argument, nullptr, 'r'},
     {"real-high", required_argument, nullptr, 's'},
     {"imag-low",  required_argument, nullptr, 'i'},
     {"imag-high", required_argument, nullptr, 'j'},
     {"iter-low",  required_argument, nullptr, 'k'},
     {"iter-high", required_argument, nullptr, 'l'},
-    {"block-size",required_argument, nullptr, 'z'},
     {nullptr,     0,                 nullptr,  0 }
 };
 
@@ -106,12 +110,12 @@ bool parse_options(options_t& opt, bool print, int argc, char **argv)
     static const std::string sgl="single";
     std::string prec;
     opterr = 0;
-    while((option = getopt_long(argc, argv, ":hp:z:d:m:e:W:H:r:s:i:j:k:l:", options, &option_index)) != -1) {
+    while((option = getopt_long(argc, argv, ":hp:z:b:m:e:d:W:H:r:s:i:j:k:l:", options, &option_index)) != -1) {
         switch(option) {
             case 'h':
                 if(print)
                     print_usage(stdout);
-                return true;
+                return false;
             break;
 
             case 'p':
@@ -129,18 +133,13 @@ bool parse_options(options_t& opt, bool print, int argc, char **argv)
                 return false;
             break;
 
-            case 'W':
-                if(!size_t_optarg(opt.width, print))
+            case 'z':
+                if(!size_t_optarg(opt.run_size, print))
                     return false;
             break;
 
-            case 'H':
-                if(!size_t_optarg(opt.height, print))
-                    return false;
-            break;
-
-            case 'd':
-                if(!double_optarg(opt.radius, print))
+            case 'b':
+                if(!size_t_optarg(opt.block_size, print))
                     return false;
             break;
 
@@ -151,9 +150,26 @@ bool parse_options(options_t& opt, bool print, int argc, char **argv)
             break;
 
             case 'e':
+                fprintf(stderr, "Error condition not yet implemented\n");
+                return false;
                 if(!double_optarg(opt.error, print))
                     return false;
                 opt.use_err = true;
+            break;
+
+            case 'd':
+                if(!double_optarg(opt.radius, print))
+                    return false;
+            break;
+
+            case 'W':
+                if(!size_t_optarg(opt.width, print))
+                    return false;
+            break;
+
+            case 'H':
+                if(!size_t_optarg(opt.height, print))
+                    return false;
             break;
 
             case 'r':
@@ -183,11 +199,6 @@ bool parse_options(options_t& opt, bool print, int argc, char **argv)
 
             case 'l':
                 if(!size_t_optarg(opt.iter_high, print))
-                    return false;
-            break;
-
-            case 'z':
-                if(!size_t_optarg(opt.block_size, print))
                     return false;
             break;
 
