@@ -140,7 +140,7 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
         print_info(options, 0.0, 0, 0, 0, std::numeric_limits<double>::infinity());
 
     for(blocks_written=0; blocks_written < options.max_blocks; ++blocks_written) {
-        //#pragma omp parallel for
+        #pragma omp parallel for
         for(size_t i = 0; i < options.block_size; ++i) {
             int thread_num = omp_get_thread_num();
             Floating *cr = points.data() + rs*(thread_num +  0);
@@ -199,9 +199,9 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
             size_t t = write_orbits(tr, ti, high_block, options.iter_high,
                 rl, rh, il, ih, tmp.data(), options.width, options.height);
 
-            //#pragma omp atomic
+            #pragma omp atomic
             points_written += t;
-            //#pragma omp atomic
+            #pragma omp atomic
             orbits_written += high_block;
         }
 
