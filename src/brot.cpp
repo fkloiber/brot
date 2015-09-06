@@ -140,6 +140,11 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
         print_info(options, 0.0, 0, 0, 0, std::numeric_limits<double>::infinity());
 
     while(1) {
+        if(world_rank != 0) {
+            orbits_written = 0;
+            points_written = 0;
+            std::memset(tmp.data(), 0, tmp.size()*sizeof(uint32_t));
+        }
         #pragma omp parallel for
         for(size_t i = 0; i < options.block_size; ++i) {
             int thread_num = omp_get_thread_num();
@@ -206,10 +211,10 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
         }
 
         double error;
+        MPI_Allreduce(&orbits_written, &orbits_written, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(&points_written, &points_written, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
         if(world_rank == 0) {
-            MPI_Reduce(MPI_IN_PLACE, tmp.data(),      image_size, MPI_UINT32_T, MPI_SUM, 0, MPI_COMM_WORLD);
-            MPI_Reduce(MPI_IN_PLACE, &points_written, 1,          MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
-            MPI_Reduce(MPI_IN_PLACE, &orbits_written, 1,          MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce(MPI_IN_PLACE, tmp.data(), image_size, MPI_UINT32_T, MPI_SUM, 0, MPI_COMM_WORLD);
 
             double sum = 0;
             #pragma omp parallel for reduction(+:sum)
@@ -223,9 +228,7 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
             print_info(options, current_time-start_time, blocks_written+1,
                 orbits_written, points_written, error);
         } else {
-            MPI_Reduce(tmp.data(),      tmp.data(),      image_size, MPI_UINT32_T, MPI_SUM, 0, MPI_COMM_WORLD);
-            MPI_Reduce(&points_written, &points_written, 1,          MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
-            MPI_Reduce(&orbits_written, &orbits_written, 1,          MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce(tmp.data(), tmp.data(), image_size, MPI_UINT32_T, MPI_SUM, 0, MPI_COMM_WORLD);
         }
         ++blocks_written;
         if(options.use_max && blocks_written >= options.max_blocks) {
