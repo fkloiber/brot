@@ -231,6 +231,9 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
         if(options.use_max && blocks_written >= options.max_blocks) {
             break;
         }
+        if(options.use_orb && orbits_written >= options.max_orbits) {
+            break;
+        }
         if(options.use_err) {
             MPI_Bcast(&error, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             if(error < options.error)
@@ -260,6 +263,12 @@ void print_info(const options_t& opt, double elapsed, uint64_t blocks, uint64_t 
         valid_eta = true;
         double progress = (double)blocks / opt.max_blocks;
         remaining = (1.0 - progress) / progress * elapsed;
+    }
+
+    if(opt.use_orb && orbits != 0) {
+        valid_eta = true;
+        double progress = (double)orbits / opt.max_orbits;
+        remaining = std::min(remaining, (1.0 - progress) / progress * elapsed);
     }
 
     if(opt.use_err && blocks >= 2 && error != 0.0 && !std::isnan(error)) {
