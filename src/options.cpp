@@ -12,6 +12,7 @@ void print_usage(FILE *f)
         "  -z, --run-size    number of points a node processes at once. Must be a multiple of 8 (single) or 4 (double).\n"
         "  -b, --block-size  number of runs in a block\n"
         "  -m, --max-blocks  maximum number of blocks in calculation\n"
+        "  -o, --max-orbits  maximum number of orbits in calculation\n"
         "  -e, --error       error threshold\n"
         "  -d, --radius      escape radius\n"
         "  -W, --width       pixel width of the output image\n"
@@ -36,6 +37,7 @@ const struct option options[] =
     {"run-size",   required_argument, nullptr, 'z'},
     {"block-size", required_argument, nullptr, 'b'},
     {"max-blocks", required_argument, nullptr, 'm'},
+    {"max-orbits", required_argument, nullptr, 'o'},
     {"error",      required_argument, nullptr, 'e'},
     {"radius",     required_argument, nullptr, 'd'},
     {"width",      required_argument, nullptr, 'W'},
@@ -118,7 +120,7 @@ bool parse_options(options_t& opt, bool print, int argc, char **argv)
     static const std::string sgl="single";
     std::string prec;
     opterr = 0;
-    while((option = getopt_long(argc, argv, ":hp:z:b:m:e:d:W:H:R:S:I:J:r:s:i:j:k:l:", options, &option_index)) != -1) {
+    while((option = getopt_long(argc, argv, ":hp:z:b:m:o:e:d:W:H:R:S:I:J:r:s:i:j:k:l:", options, &option_index)) != -1) {
         switch(option) {
             case 'h':
                 if(print)
@@ -155,6 +157,12 @@ bool parse_options(options_t& opt, bool print, int argc, char **argv)
                 if(!size_t_optarg(opt.max_blocks, print))
                     return false;
                 opt.use_max = true;
+            break;
+
+            case 'o':
+                if(!size_t_optarg(opt.max_orbits, print))
+                    return false;
+                opt.use_orb = true;
             break;
 
             case 'e':
@@ -262,16 +270,13 @@ bool parse_options(options_t& opt, bool print, int argc, char **argv)
         return false;
     }
 
-    if(!opt.use_max && !opt.use_err) {
+    if(!opt.use_max && !opt.use_orb && !opt.use_err) {
         if(print) {
-            fprintf(stderr, "Error: Either --max-blocks or --error must be specified\n");
+            fprintf(stderr, "Error: Either -m, -o or -e must be specified\n");
             print_usage(stderr);
         }
         return false;
     }
-
-    if(!opt.use_max)
-        opt.max_blocks = std::numeric_limits<size_t>::max();
 
     if(print) {
         FILE *f = fopen(argv[optind], "a");

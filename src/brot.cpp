@@ -139,7 +139,7 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
     if(world_rank == 0)
         print_info(options, 0.0, 0, 0, 0, std::numeric_limits<double>::infinity());
 
-    for(blocks_written=0; blocks_written < options.max_blocks; ++blocks_written) {
+    while(1) {
         #pragma omp parallel for
         for(size_t i = 0; i < options.block_size; ++i) {
             int thread_num = omp_get_thread_num();
@@ -205,6 +205,7 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
             orbits_written += high_block;
         }
 
+        double error;
         if(world_rank == 0) {
             MPI_Reduce(MPI_IN_PLACE, tmp.data(),      image_size, MPI_UINT32_T, MPI_SUM, 0, MPI_COMM_WORLD);
             MPI_Reduce(MPI_IN_PLACE, &points_written, 1,          MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -216,24 +217,23 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
                 sum += std::abs(double(tmp[i] - img[i]))/(1+tmp[i]);
             }
             std::memcpy(img.data(), tmp.data(), image_size*sizeof(uint32_t));
-            double error = (double)sum/image_size;
-
-            if(options.use_err)
-                MPI_Bcast(&error, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+            error = (double)sum/image_size;
 
             double current_time = MPI_Wtime();
             print_info(options, current_time-start_time, blocks_written+1,
                 orbits_written, points_written, error);
-            if(options.use_err && error < options.error)
-                break;
         } else {
             MPI_Reduce(tmp.data(),      tmp.data(),      image_size, MPI_UINT32_T, MPI_SUM, 0, MPI_COMM_WORLD);
             MPI_Reduce(&points_written, &points_written, 1,          MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
             MPI_Reduce(&orbits_written, &orbits_written, 1,          MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
-            double error;
-            if(options.use_err)
-                MPI_Bcast(&error, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-            if(options.use_err && error < options.error)
+        }
+        ++blocks_written;
+        if(options.use_max && blocks_written >= options.max_blocks) {
+            break;
+        }
+        if(options.use_err) {
+            MPI_Bcast(&error, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+            if(error < options.error)
                 break;
         }
     }
