@@ -213,7 +213,7 @@ void iterate(const options_t& options, std::vector<uint32_t>& img)
             double sum = 0;
             #pragma omp parallel for reduction(+:sum)
             for(size_t i = 0; i < image_size; ++i) {
-                sum += std::abs(double(tmp[i] - img[i]))/(tmp[i]);
+                sum += std::abs(double(tmp[i] - img[i]))/(1+tmp[i]);
             }
             std::memcpy(img.data(), tmp.data(), image_size*sizeof(uint32_t));
             double error = (double)sum/image_size;
